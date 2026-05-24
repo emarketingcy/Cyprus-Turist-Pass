@@ -6,6 +6,7 @@ import '../features/auth/models/user_model.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/screens/auth_screen.dart';
 import '../features/customer/screens/customer_app.dart';
+import '../features/merchant/screens/merchant_app.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
@@ -58,9 +59,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.merchant,
-        // Replaced in Phase 4 with real MerchantApp
-        builder: (_, __) =>
-            const _PlaceholderScreen(label: 'Merchant POS — Phase 4'),
+        builder: (_, __) => const MerchantApp(),
       ),
       GoRoute(
         path: AppRoutes.admin,
