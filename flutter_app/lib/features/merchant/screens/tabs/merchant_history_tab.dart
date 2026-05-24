@@ -88,7 +88,7 @@ class MerchantHistoryTab extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(fmtEur.format(t.merchantPayout.isNaN ? t.finalAmount : t.merchantPayout),
+                  Text(fmtEur.format(t.finalAmount),
                       style: const TextStyle(
                           color: AppColors.success,
                           fontWeight: FontWeight.w700,
