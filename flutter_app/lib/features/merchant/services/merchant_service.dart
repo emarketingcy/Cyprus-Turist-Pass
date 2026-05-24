@@ -57,9 +57,47 @@ class MerchantService {
     }
   }
 
-  Future<void> updateProfile(Map<String, dynamic> data) async {
+  Future<void> updateProfile({
+    required String businessName,
+    required double discountRate,
+    String? description,
+    String? logoPath,
+    String? menuPath,
+  }) async {
     try {
-      await _dio.put<dynamic>(ApiConstants.merchantProfile, data: data);
+      final hasFiles = logoPath != null || menuPath != null;
+
+      if (hasFiles) {
+        final formData = FormData.fromMap({
+          'businessName': businessName,
+          'discountRate': discountRate.toString(),
+          if (description != null) 'description': description,
+          if (logoPath != null)
+            'logo': await MultipartFile.fromFile(
+              logoPath,
+              filename: logoPath.split('/').last,
+            ),
+          if (menuPath != null)
+            'menu': await MultipartFile.fromFile(
+              menuPath,
+              filename: menuPath.split('/').last,
+            ),
+        });
+        await _dio.put<dynamic>(
+          ApiConstants.merchantProfile,
+          data: formData,
+          options: Options(contentType: 'multipart/form-data'),
+        );
+      } else {
+        await _dio.put<dynamic>(
+          ApiConstants.merchantProfile,
+          data: {
+            'businessName': businessName,
+            'discountRate': discountRate,
+            if (description != null) 'description': description,
+          },
+        );
+      }
     } on DioException catch (e) {
       throw mapDioError(e);
     }

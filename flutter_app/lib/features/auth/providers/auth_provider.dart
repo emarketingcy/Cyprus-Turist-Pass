@@ -179,6 +179,11 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthState();
   }
 
+  /// Called externally (e.g. after settings save) to refresh the user object.
+  void setAuthenticated({required UserModel user, required String token}) {
+    state = AuthState(user: user, token: token);
+  }
+
   void clearError() => state = state.copyWith(clearError: true);
 
   void clearPromptBiometricSetup() =>

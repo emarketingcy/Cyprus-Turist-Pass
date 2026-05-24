@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'tabs/merchant_history_tab.dart';
 import 'tabs/pos_tab.dart';
+import 'tabs/settings_tab.dart';
 
 class MerchantApp extends ConsumerStatefulWidget {
   const MerchantApp({super.key});
@@ -121,8 +122,7 @@ class _MerchantAppState extends ConsumerState<MerchantApp> {
         children: [
           const PosTab(),
           const MerchantHistoryTab(),
-          // Settings placeholder — replaced in Phase 5
-          const _SettingsPlaceholder(),
+          const SettingsTab(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -154,12 +154,3 @@ class _MerchantAppState extends ConsumerState<MerchantApp> {
   }
 }
 
-class _SettingsPlaceholder extends StatelessWidget {
-  const _SettingsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) => const Center(
-        child: Text('Settings — Phase 5',
-            style: TextStyle(color: AppColors.surface400)),
-      );
-}
