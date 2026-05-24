@@ -27,7 +27,7 @@ class QrToken {
         qrToken: j['qrToken'] as String,
         merchantId: j['merchantId'] as int? ?? 0,
         merchantName: j['merchantName'] as String,
-        discountRate: (j['discountRate'] as num).toDouble(),
+        discountRate: ((j['discountRate'] ?? 0) as num).toDouble(),
         expiresAt: DateTime.parse(j['expiresAt'] as String),
       );
 }

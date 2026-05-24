@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/models/user_model.dart';
 import '../../providers/contract_provider.dart';
 
 class ValidateTab extends ConsumerStatefulWidget {
@@ -115,7 +116,7 @@ class _ValidateTabState extends ConsumerState<ValidateTab> {
         ),
       );
 
-  Widget _buildContractCard(contract) {
+  Widget _buildContractCard(ContractInfo contract) {
     final fmt = DateFormat('d MMM yyyy');
     final valid = contract.isValid;
 

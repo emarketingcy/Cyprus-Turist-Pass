@@ -71,7 +71,7 @@ class _PosTabState extends ConsumerState<PosTab>
     _flashCtrl.forward(from: 0);
   }
 
-  void _triggerFailFeedback() async {
+  Future<void> _triggerFailFeedback() async {
     HapticFeedback.vibrate();
     await Future<void>.delayed(const Duration(milliseconds: 120));
     HapticFeedback.vibrate();

@@ -78,7 +78,7 @@ class _MerchantAppState extends ConsumerState<MerchantApp> {
                 radius: 16,
                 backgroundColor: AppColors.success.withAlpha(40),
                 child: Text(
-                  profile?.businessName.isNotEmpty == true
+                  (profile?.businessName.isNotEmpty ?? false)
                       ? profile!.businessName[0].toUpperCase()
                       : '?',
                   style: const TextStyle(

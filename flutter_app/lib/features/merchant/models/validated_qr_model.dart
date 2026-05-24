@@ -22,7 +22,7 @@ class ValidatedQr {
   factory ValidatedQr.fromJson(Map<String, dynamic> j) => ValidatedQr(
         qrToken: j['qrToken'] as String,
         customerName: j['customerName'] as String? ?? 'Customer',
-        discountRate: (j['discountRate'] as num).toDouble(),
+        discountRate: ((j['discountRate'] ?? 0) as num).toDouble(),
         merchantName: j['merchantName'] as String? ?? '',
         customerId: j['customerId'] as int?,
       );
