@@ -593,36 +593,36 @@ class _ScanFramePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     // Top-left
-    canvas.drawLine(Offset(left, top + cornerLen), Offset(left, top + radius));
+    canvas.drawLine(Offset(left, top + cornerLen), Offset(left, top + radius), paint);
     canvas.drawArc(
         Rect.fromLTWH(left, top, radius * 2, radius * 2),
         3.14, 0.5 * 3.14, false, paint);
     canvas.drawLine(
-        Offset(left + radius, top), Offset(left + cornerLen, top));
+        Offset(left + radius, top), Offset(left + cornerLen, top), paint);
     // Top-right
     canvas.drawLine(
-        Offset(right - cornerLen, top), Offset(right - radius, top));
+        Offset(right - cornerLen, top), Offset(right - radius, top), paint);
     canvas.drawArc(
         Rect.fromLTWH(right - radius * 2, top, radius * 2, radius * 2),
         1.5 * 3.14, 0.5 * 3.14, false, paint);
     canvas.drawLine(
-        Offset(right, top + radius), Offset(right, top + cornerLen));
+        Offset(right, top + radius), Offset(right, top + cornerLen), paint);
     // Bottom-right
     canvas.drawLine(
-        Offset(right, bottom - cornerLen), Offset(right, bottom - radius));
+        Offset(right, bottom - cornerLen), Offset(right, bottom - radius), paint);
     canvas.drawArc(
         Rect.fromLTWH(right - radius * 2, bottom - radius * 2, radius * 2, radius * 2),
         0, 0.5 * 3.14, false, paint);
     canvas.drawLine(
-        Offset(right - radius, bottom), Offset(right - cornerLen, bottom));
+        Offset(right - radius, bottom), Offset(right - cornerLen, bottom), paint);
     // Bottom-left
     canvas.drawLine(
-        Offset(left + cornerLen, bottom), Offset(left + radius, bottom));
+        Offset(left + cornerLen, bottom), Offset(left + radius, bottom), paint);
     canvas.drawArc(
         Rect.fromLTWH(left, bottom - radius * 2, radius * 2, radius * 2),
         0.5 * 3.14, 0.5 * 3.14, false, paint);
     canvas.drawLine(
-        Offset(left, bottom - radius), Offset(left, bottom - cornerLen));
+        Offset(left, bottom - radius), Offset(left, bottom - cornerLen), paint);
   }
 
   @override
