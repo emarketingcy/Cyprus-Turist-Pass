@@ -1,0 +1,85 @@
+name: tourist_pass_cyprus
+description: Tourist Pass Cyprus — Discount platform for Cyprus tourists. By Malaka Cyprus (malaka.cy).
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.3.5
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Network
+  dio: ^5.7.0
+
+  # Secure storage (JWT)
+  flutter_secure_storage: ^9.2.2
+
+  # QR generation (Phase 3)
+  qr_flutter: ^4.1.0
+
+  # QR scanning (Phase 4)
+  mobile_scanner: ^5.2.3
+
+  # File / image picker (Phase 5)
+  image_picker: ^1.1.2
+  file_picker: ^8.1.2
+
+  # Screen brightness for QR display (Phase 3)
+  wakelock_plus: ^1.2.10
+
+  # Icons
+  flutter_launcher_icons: ^0.14.3
+
+  # Splash screen
+  flutter_native_splash: ^2.4.3
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.12
+  riverpod_generator: ^2.4.3
+
+# ─── App icon config ────────────────────────────────────────────────
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#0F172A"
+    theme_color: "#4F46E5"
+  windows:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    icon_size: 48
+
+# ─── Splash screen config ────────────────────────────────────────────
+flutter_native_splash:
+  color: "#0F172A"
+  image: assets/icons/app_icon.png
+  android_12:
+    color: "#0F172A"
+    icon_background_color: "#0F172A"
+    image: assets/icons/app_icon.png
+  fullscreen: false
+  web: false
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+    - assets/images/
