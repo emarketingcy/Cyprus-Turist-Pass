@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,11 +21,14 @@ class PosTab extends ConsumerStatefulWidget {
 
 class _PosTabState extends ConsumerState<PosTab>
     with SingleTickerProviderStateMixin {
-  final _scannerCtrl = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-    torchEnabled: false,
-  );
+  // MobileScanner is not supported on web
+  late final MobileScannerController? _scannerCtrl = kIsWeb
+      ? null
+      : MobileScannerController(
+          detectionSpeed: DetectionSpeed.normal,
+          facing: CameraFacing.back,
+          torchEnabled: false,
+        );
   final _amountCtrl = TextEditingController();
   final _amountFormKey = GlobalKey<FormState>();
 
@@ -41,7 +45,7 @@ class _PosTabState extends ConsumerState<PosTab>
 
   @override
   void dispose() {
-    _scannerCtrl.dispose();
+    _scannerCtrl?.dispose();
     _amountCtrl.dispose();
     _flashCtrl.dispose();
     super.dispose();
@@ -128,9 +132,26 @@ class _PosTabState extends ConsumerState<PosTab>
 
   Widget _buildScanner(bool isPending) => Stack(
         children: [
-          if (!isPending)
+          if (kIsWeb)
+            Container(
+              color: AppColors.surface900,
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.no_photography_outlined,
+                        color: AppColors.surface500, size: 48),
+                    SizedBox(height: 12),
+                    Text('Camera scanning is not available in the browser.',
+                        style: TextStyle(color: AppColors.surface400),
+                        textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            )
+          else if (!isPending)
             MobileScanner(
-              controller: _scannerCtrl,
+              controller: _scannerCtrl!,
               onDetect: (capture) {
                 final raw = capture.barcodes.firstOrNull?.rawValue;
                 if (raw != null) {
@@ -183,13 +204,13 @@ class _PosTabState extends ConsumerState<PosTab>
             ),
           ),
 
-          // Torch toggle (bottom-right)
-          if (!isPending)
+          // Torch toggle (bottom-right, mobile only)
+          if (!kIsWeb && !isPending)
             Positioned(
               bottom: 32,
               right: 24,
               child: GestureDetector(
-                onTap: () => _scannerCtrl.toggleTorch(),
+                onTap: () => _scannerCtrl?.toggleTorch(),
                 child: Container(
                   width: 48,
                   height: 48,
