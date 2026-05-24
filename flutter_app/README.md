@@ -12,6 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter" />
+  <img src="https://img.shields.io/badge/Version-1.1.0-4F46E5" />
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey" />
   <img src="https://img.shields.io/badge/Bundle%20ID-com.malaka.touristpass-4F46E5" />
   <img src="https://img.shields.io/badge/Backend-WordPress%20REST%20API-21759B?logo=wordpress" />
@@ -34,13 +35,15 @@
 11. [API reference](#api-reference)
 12. [Roles & routing](#roles--routing)
 13. [Biometric authentication](#biometric-authentication)
-14. [Troubleshooting](#troubleshooting)
+14. [Web platform notes](#web-platform-notes)
+15. [Troubleshooting](#troubleshooting)
+16. [Changelog](#changelog)
 
 ---
 
 ## About the app
 
-Tourist Pass Cyprus is a cross-platform mobile app (iOS, Android, Web) that connects tourists who have rented a car in Cyprus with participating local merchants offering exclusive discounts.
+Tourist Pass Cyprus is a cross-platform app (iOS, Android, Web) that connects tourists who have rented a car in Cyprus with participating local merchants offering exclusive discounts.
 
 - **Tourists** validate their rental contract, browse merchants, and generate a one-time QR code to redeem discounts at the point of sale.
 - **Merchants** use the built-in POS scanner to read the tourist's QR code, enter the bill amount, and process the discounted payment in under 2 seconds.
@@ -60,7 +63,7 @@ All data flows exclusively through the **WordPress REST API** (`cyprus-tourist-p
 - ✅ Transaction history with monthly grouping
 
 ### Merchant POS
-- ✅ Full-screen QR scanner (`mobile_scanner`) with corner-bracket overlay
+- ✅ Full-screen QR scanner (`mobile_scanner`) with corner-bracket overlay — **mobile only**
 - ✅ < 2 s scan → validate → calculate → process flow
 - ✅ Live payment split breakdown (original / discount / platform fee / your payout)
 - ✅ Haptic + visual feedback on success and failure (no blocking modals)
@@ -76,7 +79,7 @@ All data flows exclusively through the **WordPress REST API** (`cyprus-tourist-p
 
 ### Auth & Security
 - ✅ WordPress JWT login & registration (email / password)
-- ✅ Biometric login — Face ID, Touch ID, fingerprint (opt-in per device)
+- ✅ Biometric login — Face ID, Touch ID, fingerprint (opt-in per device, mobile only)
 - ✅ JWT stored in encrypted storage (Android EncryptedSharedPrefs, iOS Keychain)
 - ✅ Automatic session restore on cold start
 - ✅ 401 → auto-logout and redirect to login
@@ -101,6 +104,16 @@ All data flows exclusively through the **WordPress REST API** (`cyprus-tourist-p
 | App icon | flutter_launcher_icons | ^0.14.3 |
 | Splash screen | flutter_native_splash | ^2.4.3 |
 | Date formatting | intl | ^0.19.0 |
+
+### Android build toolchain
+
+| Tool | Version |
+|---|---|
+| Android Gradle Plugin | 8.9.1 |
+| Gradle wrapper | 8.11.1 |
+| Kotlin | 2.1.0 |
+| Min SDK | 21 (Android 5.0) |
+| Compile / Target SDK | Flutter default |
 
 ---
 
@@ -139,9 +152,6 @@ Place a **1 024 × 1 024 px PNG** at:
 ```
 flutter_app/assets/icons/app_icon.png
 ```
-
-Design spec: dark `#0F172A` background, logo mark centred in a 640 × 640 px circle.  
-See [`assets/icons/ICON_INSTRUCTIONS.md`](assets/icons/ICON_INSTRUCTIONS.md) for full details.
 
 ### 4. Generate app icons and splash screen
 
@@ -202,26 +212,25 @@ flutter run \
   --dart-define=API_BASE_URL=https://yoursite.com/wp-json
 ```
 
-### Web
+### Web (Chrome)
 
 ```bash
 flutter run -d chrome \
   --dart-define=API_BASE_URL=https://yoursite.com/wp-json
 ```
 
+> Note: QR scanning and biometric login are **not available** in the browser. All other features work normally on web.
+
 ### Using a local WordPress (ngrok / tunnel)
 
 ```bash
-# Expose your local WP to the internet
 ngrok http 80
 
 flutter run \
   --dart-define=API_BASE_URL=https://xxxx.ngrok.io/wp-json
 ```
 
-### Demo accounts (no real WP instance needed for UI exploration)
-
-The login screen includes one-tap demo account chips:
+### Demo accounts
 
 | Role | Email | Password |
 |---|---|---|
@@ -235,6 +244,21 @@ The login screen includes one-tap demo account chips:
 
 ## Building for production
 
+### Android — debug APK (for testing on a device)
+
+```bash
+flutter build apk --debug \
+  --dart-define=API_BASE_URL=https://yoursite.com/wp-json
+```
+
+Output: `build/app/outputs/flutter-apk/app-debug.apk`
+
+Install directly on a connected device:
+
+```bash
+adb install build/app/outputs/flutter-apk/app-debug.apk
+```
+
 ### Android — release APK
 
 ```bash
@@ -243,6 +267,8 @@ flutter build apk --release \
 ```
 
 Output: `build/app/outputs/flutter-apk/app-release.apk`
+
+> Release builds require a signing keystore. See [Android signing](#android-signing) below.
 
 ### Android — App Bundle (Play Store)
 
@@ -269,30 +295,47 @@ flutter build web --release \
   --dart-define=API_BASE_URL=https://yoursite.com/wp-json
 ```
 
-Output: `build/web/` — deploy to any static host or CDN.
+Output: `build/web/` — deploy to any static host, CDN, or Firebase Hosting.
 
-### Signing
+---
 
-- **Android:** Create a keystore and configure `android/key.properties` — see [Flutter docs](https://docs.flutter.dev/deployment/android#create-an-upload-keystore).
-- **iOS:** Configure signing in Xcode (`Runner.xcworkspace → Signing & Capabilities`) with your Apple Developer account and Bundle ID `com.malaka.touristpass`.
+### Android signing
+
+1. Create a keystore:
+
+```bash
+keytool -genkey -v \
+  -keystore ~/upload-keystore.jks \
+  -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. Create `android/key.properties`:
+
+```properties
+storePassword=<your-store-password>
+keyPassword=<your-key-password>
+keyAlias=upload
+storeFile=<path-to>/upload-keystore.jks
+```
+
+3. Update `android/app/build.gradle.kts` to reference `key.properties` in the `signingConfigs` block.
 
 ---
 
 ## App icon & splash screen
 
-The icon and splash are generated from a single source image using:
+The icon and splash are generated from a single source image:
 
-- [`flutter_launcher_icons`](https://pub.dev/packages/flutter_launcher_icons) — creates adaptive icons for Android, standard icons for iOS, and favicon/manifest for web.
-- [`flutter_native_splash`](https://pub.dev/packages/flutter_native_splash) — generates a native dark (`#0F172A`) launch screen for Android 12+ and iOS.
-
-After placing `assets/icons/app_icon.png`, regenerate:
+- [`flutter_launcher_icons`](https://pub.dev/packages/flutter_launcher_icons) — adaptive icons for Android, standard icons for iOS, favicon + web manifest.
+- [`flutter_native_splash`](https://pub.dev/packages/flutter_native_splash) — native dark (`#0F172A`) launch screen for Android 12+ and iOS.
 
 ```bash
 dart run flutter_launcher_icons
 dart run flutter_native_splash:create
 ```
 
-Config lives in [`pubspec.yaml`](pubspec.yaml) under the `flutter_launcher_icons:` and `flutter_native_splash:` keys.
+Config lives in [`pubspec.yaml`](pubspec.yaml) under `flutter_launcher_icons:` and `flutter_native_splash:`.
 
 ---
 
@@ -305,18 +348,14 @@ flutter_app/
 │   ├── app.dart                          # MaterialApp.router + light/dark themes
 │   │
 │   ├── core/
-│   │   ├── constants/
-│   │   │   └── api_constants.dart        # All WP API route strings + storage keys
+│   │   ├── constants/api_constants.dart  # All WP API route strings + storage keys
 │   │   ├── network/
 │   │   │   ├── api_client.dart           # Dio singleton, error mapper
 │   │   │   └── auth_interceptor.dart     # JWT Bearer injection + 401 auto-logout
-│   │   ├── storage/
-│   │   │   └── secure_storage.dart       # Encrypted JWT + biometric preference
-│   │   └── theme/
-│   │       └── app_theme.dart            # AppColors tokens + light/dark ThemeData
+│   │   ├── storage/secure_storage.dart   # Encrypted JWT + biometric preference
+│   │   └── theme/app_theme.dart          # AppColors tokens + light/dark ThemeData
 │   │
-│   ├── router/
-│   │   └── app_router.dart               # go_router with role-based redirect guard
+│   ├── router/app_router.dart            # go_router with role-based redirect guard
 │   │
 │   └── features/
 │       ├── auth/
@@ -325,7 +364,7 @@ flutter_app/
 │       │   ├── screens/auth_screen.dart  # Login / Register + biometric lock screen
 │       │   └── services/
 │       │       ├── auth_service.dart     # login, register, getMe
-│       │       └── biometric_service.dart  # local_auth wrapper
+│       │       └── biometric_service.dart  # local_auth wrapper (mobile only)
 │       │
 │       ├── customer/
 │       │   ├── models/                   # Merchant, QrToken, Transaction
@@ -342,27 +381,29 @@ flutter_app/
 │       └── merchant/
 │           ├── models/                   # ValidatedQr, PaymentResult, PosState
 │           ├── providers/                # PosNotifier, settings, transactions
-│           ├── services/merchant_service.dart  # validateQr, processPayment, updateProfile
+│           ├── services/merchant_service.dart
 │           └── screens/
 │               ├── merchant_app.dart     # Dark 3-tab scaffold
 │               └── tabs/
-│                   ├── pos_tab.dart      # Full-screen QR scanner + state machine
+│                   ├── pos_tab.dart      # QR scanner + state machine (mobile only)
 │                   ├── merchant_history_tab.dart
 │                   └── settings_tab.dart # Logo, discount %, menu upload
 │
+├── web/
+│   ├── index.html                        # Web entry point
+│   └── manifest.json                     # PWA manifest
+│
 ├── android/
 │   └── app/
-│       ├── build.gradle.kts              # com.malaka.touristpass, minSdk 21
+│       ├── build.gradle.kts              # AGP 8.9.1, minSdk 21
 │       └── src/main/AndroidManifest.xml  # CAMERA, BIOMETRIC, WAKE_LOCK permissions
 │
 ├── ios/
 │   └── Runner/Info.plist                 # com.malaka.touristpass, NSFaceIDUsageDescription
 │
 ├── assets/
-│   ├── icons/
-│   │   ├── app_icon.png                  # ← Place your 1024×1024 source image here
-│   │   └── ICON_INSTRUCTIONS.md
-│   └── images/
+│   ├── icons/app_icon.png                # 1024×1024 source icon
+│   └── images/                           # Static images (placeholder)
 │
 ├── pubspec.yaml                          # All dependencies + icon/splash config
 └── analysis_options.yaml                 # Lint rules
@@ -388,7 +429,6 @@ All endpoints are under `{API_BASE_URL}/ctp/v1/`. Authenticated routes require `
 |---|---|---|---|
 | `POST` | `/rental/validate` | ✅ | Validate a rental contract number |
 | `GET` | `/rental/status` | ✅ | Get the current active contract |
-| `GET` | `/rental/agencies` | — | List rental agencies |
 
 ### Merchants
 
@@ -396,15 +436,15 @@ All endpoints are under `{API_BASE_URL}/ctp/v1/`. Authenticated routes require `
 |---|---|---|---|
 | `GET` | `/merchants` | ✅ | List approved merchants (`?search=&type=&city=`) |
 | `GET` | `/merchants/{id}` | ✅ | Get a single merchant |
-| `PUT` | `/merchants/profile` | ✅ | Update own merchant profile (supports `multipart/form-data`) |
+| `PUT` | `/merchants/profile` | ✅ | Update own merchant profile (multipart/form-data) |
 
 ### Payment
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/payment/create-qr` | ✅ | Generate a 15-min QR token (`{merchantId}`) |
-| `POST` | `/payment/validate-qr` | ✅ | Validate a customer's QR (`{qrToken}`) |
-| `POST` | `/payment/process` | ✅ | Process payment (`{qrToken, originalAmount}`) |
+| `POST` | `/payment/create-qr` | ✅ | Generate a 15-min QR token |
+| `POST` | `/payment/validate-qr` | ✅ | Validate a customer's QR |
+| `POST` | `/payment/process` | ✅ | Process payment |
 | `GET` | `/payment/transactions` | ✅ | Get own transaction history |
 
 ### Admin
@@ -414,18 +454,15 @@ All endpoints are under `{API_BASE_URL}/ctp/v1/`. Authenticated routes require `
 | `GET` | `/admin/stats` | ✅ Admin | Platform statistics |
 | `GET` | `/admin/merchants` | ✅ Admin | All merchants |
 | `PUT` | `/admin/merchants/{id}/status` | ✅ Admin | Approve / reject / suspend |
-| `GET` | `/admin/settings` | ✅ Admin | Get platform settings |
-| `PUT` | `/admin/settings` | ✅ Admin | Update platform settings |
 
 ### Demo contract prefixes
 
-| Prefix | Agency | Notes |
-|---|---|---|
-| `TEST` | Demo | Always valid, 7-day window |
-| `HZ` | Hertz simulation | — |
-| `SX` / `SIXT` | Sixt simulation | — |
-| `GEO` | GeoDrive simulation | — |
-| Other | — | Rejected |
+| Prefix | Agency |
+|---|---|
+| `TEST` | Demo — always valid, 7-day window |
+| `HZ` | Hertz simulation |
+| `SX` / `SIXT` | Sixt simulation |
+| `GEO` | GeoDrive simulation |
 
 ---
 
@@ -449,7 +486,9 @@ The `go_router` redirect guard enforces role boundaries: a MERCHANT JWT can neve
 
 ## Biometric authentication
 
-Biometric login is **opt-in**. After a successful email/password login, the app shows a one-time prompt:
+Biometric login is **opt-in** and **mobile only** (iOS / Android). It is automatically disabled on web.
+
+After a successful email/password login, the app shows a one-time prompt:
 
 ```
 "Enable Face ID / Fingerprint for faster sign-in?"
@@ -460,9 +499,23 @@ Once enabled:
 
 1. On next cold start the app detects the stored JWT and shows the biometric prompt automatically.
 2. Successful authentication → session is restored via `GET /auth/me`.
-3. If the user dismisses or biometric fails → they can tap **"Use password instead"** to re-authenticate with credentials (stored JWT is cleared for security).
+3. If the user dismisses or biometric fails → tap **"Use password instead"** (stored JWT is cleared for security).
 
-To disable biometrics, the user can clear app data or re-login with password which resets the preference.
+---
+
+## Web platform notes
+
+The web build is fully functional except for two hardware-dependent features:
+
+| Feature | Mobile | Web |
+|---|---|---|
+| QR scanning (POS) | ✅ `mobile_scanner` | ❌ Shows "not available in browser" |
+| Biometric login | ✅ Face ID / Fingerprint | ❌ Silently skipped (password only) |
+| QR code display | ✅ | ✅ |
+| File / logo upload | ✅ | ✅ |
+| All API features | ✅ | ✅ |
+
+The web build is PWA-ready (`manifest.json` included).
 
 ---
 
@@ -470,14 +523,39 @@ To disable biometrics, the user can clear app data or re-login with password whi
 
 | Problem | Fix |
 |---|---|
-| `API_BASE_URL not set` — calls go to placeholder URL | Always pass `--dart-define=API_BASE_URL=...` when running or building |
+| `API_BASE_URL not set` | Always pass `--dart-define=API_BASE_URL=...` when running or building |
 | iOS build fails with CocoaPods error | Run `cd ios && pod install --repo-update` |
-| Camera permission denied on Android | Ensure `CAMERA` permission is in `AndroidManifest.xml` (already included) and that you grant it at runtime |
+| Camera permission denied on Android | Grant `CAMERA` permission at runtime when prompted |
 | Biometric prompt does not appear | Device must have biometrics enrolled in system settings |
 | `MobileScanner` black screen on iOS Simulator | Simulator does not support the camera — use a physical device for QR scanning |
-| App icon not updating after change | Run `dart run flutter_launcher_icons` then clean build: `flutter clean && flutter pub get` |
+| App icon not updating | Run `dart run flutter_launcher_icons` then `flutter clean && flutter pub get` |
 | Splash screen not updating | Run `dart run flutter_native_splash:create` then `flutter clean` |
-| Multipart upload returns 400 | Confirm the WP plugin handles `$_FILES['logo']` and `$_FILES['menu']` in the `PUT /merchants/profile` handler |
+| Multipart upload returns 400 | Confirm the WP plugin handles `$_FILES['logo']` and `$_FILES['menu']` |
+| Gradle `Could not delete caches-jvm` | Run `rm -rf ~/Development/flutter/packages/flutter_tools/gradle/build` then `flutter clean` |
+| `Manifest merger failed: usesCleartextTraffic` | Check `debug/AndroidManifest.xml` — should NOT set `usesCleartextTraffic` |
+
+---
+
+## Changelog
+
+### v1.1.0 (2026-05-24)
+- Add web platform support (`web/` directory, `manifest.json`, PWA config)
+- Guard `mobile_scanner` and `local_auth` behind `kIsWeb` — graceful degradation in browser
+- Bump Android Gradle Plugin 8.3.2 → 8.9.1
+- Bump Gradle wrapper 8.4 → 8.11.1
+- Fix `canvas.drawLine` missing `Paint` argument in `_ScanFramePainter`
+- Fix `Transaction.merchantPayout` undefined — use `finalAmount` in merchant history
+- Fix `_buildContractCard` untyped parameter — add `ContractInfo` type + import
+- Fix `async void _triggerFailFeedback` → `Future<void>`
+- Fix null-unsafe `== true` guards on `firstName`/`businessName` → `?? false`
+- Add `?? 0` fallbacks on `discountRate` JSON casts
+- Fix `debug/AndroidManifest.xml` manifest merger conflict on `usesCleartextTraffic`
+- Create missing `assets/images/` directory
+
+### v1.0.0 (initial)
+- Phases 1–5: Auth, Tourist App, Merchant POS, Merchant Settings
+- Biometric login (Face ID / Fingerprint)
+- Full Android platform scaffolding (v2 embedding)
 
 ---
 

@@ -101,7 +101,7 @@ class _CustomerAppState extends ConsumerState<CustomerApp> {
                 radius: 16,
                 backgroundColor: AppColors.primaryContainer,
                 child: Text(
-                  (user?.firstName.isNotEmpty == true)
+                  (user?.firstName.isNotEmpty ?? false)
                       ? user!.firstName[0].toUpperCase()
                       : '?',
                   style: const TextStyle(

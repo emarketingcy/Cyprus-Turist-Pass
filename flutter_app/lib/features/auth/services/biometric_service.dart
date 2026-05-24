@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
@@ -11,6 +12,7 @@ class BiometricService {
   static final _auth = LocalAuthentication();
 
   Future<bool> isAvailable() async {
+    if (kIsWeb) return false;
     try {
       final can = await _auth.canCheckBiometrics;
       final supported = await _auth.isDeviceSupported();

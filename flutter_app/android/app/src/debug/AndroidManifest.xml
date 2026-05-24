@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Allow cleartext traffic for debug builds (e.g. local dev server) -->
-    <application android:usesCleartextTraffic="true"/>
+    <!-- Cleartext for localhost/10.0.2.2 is handled by network_security_config.xml -->
 </manifest>
