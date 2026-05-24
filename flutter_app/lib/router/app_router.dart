@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/models/user_model.dart';
+import '../features/auth/providers/auth_provider.dart';
+import '../features/auth/screens/auth_screen.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
@@ -48,8 +49,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.auth,
-        // Replaced in Phase 2 with real AuthScreen
-        builder: (_, __) => const _PlaceholderScreen(label: 'Auth — Phase 2'),
+        builder: (_, __) => const AuthScreen(),
       ),
       GoRoute(
         path: AppRoutes.customer,

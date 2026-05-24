@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../models/user_model.dart';
+import '../services/auth_service.dart';
 
 @immutable
 class AuthState {
@@ -37,7 +39,7 @@ class AuthState {
       );
 }
 
-/// Bridges Riverpod auth state changes to GoRouter's [Listenable] refresh.
+/// Bridges Riverpod auth state to GoRouter's [Listenable] refresh.
 class AuthChangeNotifier extends ChangeNotifier {
   AuthChangeNotifier(Ref ref) {
     ref.listen<AuthState>(authStateProvider, (_, __) => notifyListeners());
@@ -51,31 +53,70 @@ final authChangeNotifierProvider = Provider<AuthChangeNotifier>((ref) {
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
-    // Restore token from secure storage on cold start.
-    // Full hydration (GET /auth/me) happens in Phase 2.
     _restoreSession();
-    return const AuthState();
+    return const AuthState(isLoading: true);
   }
+
+  // ── Session restore ──────────────────────────────────────────────────────────
 
   Future<void> _restoreSession() async {
     final storage = ref.read(secureStorageProvider);
     final token = await storage.getToken();
-    if (token != null) {
-      // Phase 2 will call /auth/me here and set user.
-      state = state.copyWith(token: token, isLoading: false);
+    if (token == null) {
+      state = const AuthState();
+      return;
+    }
+    try {
+      final user = await ref.read(authServiceProvider).getMe();
+      state = AuthState(user: user, token: token);
+    } catch (_) {
+      // Token expired or invalid — force re-login.
+      await storage.clearAll();
+      state = const AuthState();
     }
   }
 
-  /// Called by Phase 2 login flow after successful WP JWT exchange.
-  void setAuthenticated({required UserModel user, required String token}) {
-    state = AuthState(user: user, token: token);
+  // ── Login ────────────────────────────────────────────────────────────────────
+
+  Future<void> login(String email, String password) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final result =
+          await ref.read(authServiceProvider).login(email, password);
+      await ref.read(secureStorageProvider).saveToken(result.token);
+      state = AuthState(user: result.user, token: result.token);
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (_) {
+      state = state.copyWith(
+          isLoading: false, error: 'An unexpected error occurred.');
+    }
   }
 
+  // ── Register ─────────────────────────────────────────────────────────────────
+
+  Future<void> register(Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final result = await ref.read(authServiceProvider).register(payload);
+      await ref.read(secureStorageProvider).saveToken(result.token);
+      state = AuthState(user: result.user, token: result.token);
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (_) {
+      state = state.copyWith(
+          isLoading: false, error: 'An unexpected error occurred.');
+    }
+  }
+
+  // ── Logout ───────────────────────────────────────────────────────────────────
+
   Future<void> logout() async {
-    final storage = ref.read(secureStorageProvider);
-    await storage.clearAll();
+    await ref.read(secureStorageProvider).clearAll();
     state = const AuthState();
   }
+
+  void clearError() => state = state.copyWith(clearError: true);
 }
 
 final authStateProvider = NotifierProvider<AuthNotifier, AuthState>(
