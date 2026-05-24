@@ -39,4 +39,5 @@ abstract final class ApiConstants {
   // ── Storage keys ──────────────────────────────────────────────────
   static const jwtKey = 'ctp_jwt';
   static const userRoleKey = 'ctp_role';
+  static const biometricKey = 'ctp_biometric_enabled';
 }

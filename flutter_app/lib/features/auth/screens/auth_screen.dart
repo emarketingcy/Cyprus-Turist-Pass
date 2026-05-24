@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../services/biometric_service.dart';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -69,13 +70,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     FocusScope.of(context).unfocus();
 
     final notifier = ref.read(authStateProvider.notifier);
-
     if (_mode == _AuthMode.login) {
       await notifier.login(_emailCtrl.text.trim(), _passCtrl.text);
       return;
     }
 
-    final payload = <String, dynamic>{
+    await notifier.register({
       'email': _emailCtrl.text.trim(),
       'password': _passCtrl.text,
       'firstName': _firstCtrl.text.trim(),
@@ -87,16 +87,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         'city': _city,
         'address': _addrCtrl.text.trim(),
       },
-    };
-    await notifier.register(payload);
+    });
   }
 
   void _fillDemo(String email, String pass) {
     _emailCtrl.text = email;
     _passCtrl.text = pass;
-    if (_mode != _AuthMode.login) {
-      setState(() => _mode = _AuthMode.login);
-    }
+    if (_mode != _AuthMode.login) setState(() => _mode = _AuthMode.login);
     ref.read(authStateProvider.notifier).clearError();
   }
 
@@ -113,6 +110,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider);
+
+    // Biometric lock screen takes priority over the login form.
+    if (auth.biometricPending) {
+      return _BiometricLockScreen(
+        onUnlock: () => ref.read(authStateProvider.notifier).unlockWithBiometric(),
+        onUsePassword: () => ref.read(authStateProvider.notifier).cancelBiometric(),
+      );
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -132,7 +137,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Column(
@@ -234,7 +240,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
       );
 
-  // ── Mode toggle tabs ──────────────────────────────────────────────────────
+  // ── Mode toggle ───────────────────────────────────────────────────────────
 
   Widget _buildModeToggle() => Container(
         decoration: BoxDecoration(
@@ -243,10 +249,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         padding: const EdgeInsets.all(4),
         child: Row(
-          children: [
-            _tab('Sign In', _AuthMode.login),
-            _tab('Register', _AuthMode.register),
-          ],
+          children: [_tab('Sign In', _AuthMode.login), _tab('Register', _AuthMode.register)],
         ),
       );
 
@@ -264,10 +267,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withAlpha(20),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
+                        color: Colors.black.withAlpha(20),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
                   ]
                 : null,
           ),
@@ -299,9 +301,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final isTourist = role == _RegRole.tourist;
     final selected = _role == role;
     final accent = isTourist ? AppColors.primary : AppColors.success;
-    final label = isTourist ? 'Tourist' : 'Merchant';
-    final icon = isTourist ? Icons.person_rounded : Icons.storefront_rounded;
-
     return GestureDetector(
       onTap: () => setState(() => _role = role),
       child: AnimatedContainer(
@@ -311,16 +310,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           color: selected ? accent.withAlpha(15) : AppColors.surface50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? accent : AppColors.surface200,
-            width: selected ? 2 : 1,
-          ),
+              color: selected ? accent : AppColors.surface200,
+              width: selected ? 2 : 1),
         ),
         child: Column(
           children: [
-            Icon(icon, color: selected ? accent : AppColors.surface400, size: 28),
+            Icon(
+              isTourist ? Icons.person_rounded : Icons.storefront_rounded,
+              color: selected ? accent : AppColors.surface400,
+              size: 28,
+            ),
             const SizedBox(height: 8),
             Text(
-              label,
+              isTourist ? 'Tourist' : 'Merchant',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -348,7 +350,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             const SizedBox(height: 14),
           ],
           _field(_emailCtrl, 'Email Address',
-              type: TextInputType.emailAddress, required: true, validator: _validateEmail),
+              type: TextInputType.emailAddress,
+              required: true,
+              validator: _validateEmail),
           const SizedBox(height: 14),
           _field(
             _passCtrl,
@@ -408,13 +412,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ref.read(authStateProvider.notifier).clearError();
           }
         },
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: suffix,
-        ),
+        decoration: InputDecoration(labelText: label, suffixIcon: suffix),
         validator: validator ??
             (required
-                ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null
+                ? (v) => (v == null || v.trim().isEmpty)
+                    ? '$label is required'
+                    : null
                 : null),
       );
 
@@ -430,9 +433,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         decoration: InputDecoration(labelText: label),
         items: items
             .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(displayFn?.call(e) ?? e),
-                ))
+                value: e, child: Text(displayFn?.call(e) ?? e)))
             .toList(),
         onChanged: onChanged,
         validator: (v) => v == null ? '$label is required' : null,
@@ -453,7 +454,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     return null;
   }
 
-  // ── Error banner ──────────────────────────────────────────────────────────
+  // ── Error / submit / misc ─────────────────────────────────────────────────
 
   Widget _buildErrorBanner(String message) => Container(
         padding: const EdgeInsets.all(12),
@@ -468,23 +469,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 color: AppColors.error, size: 18),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                    color: AppColors.error, fontSize: 13, height: 1.4),
-              ),
+              child: Text(message,
+                  style: const TextStyle(
+                      color: AppColors.error, fontSize: 13, height: 1.4)),
             ),
           ],
         ),
       );
 
-  // ── Submit button ─────────────────────────────────────────────────────────
-
   Widget _buildSubmitButton(bool loading) => ElevatedButton(
         onPressed: loading ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              _mode == _AuthMode.login ? AppColors.primary : AppColors.success,
+          backgroundColor: _mode == _AuthMode.login
+              ? AppColors.primary
+              : AppColors.success,
           disabledBackgroundColor: AppColors.surface300,
         ),
         child: loading
@@ -494,16 +492,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2),
               )
-            : Text(
-                _mode == _AuthMode.login
-                    ? 'Sign In'
-                    : _role == _RegRole.merchant
-                        ? 'Create Merchant Account'
-                        : 'Create Tourist Account',
-              ),
+            : Text(_mode == _AuthMode.login
+                ? 'Sign In'
+                : _role == _RegRole.merchant
+                    ? 'Create Merchant Account'
+                    : 'Create Tourist Account'),
       );
-
-  // ── Mode switch link ──────────────────────────────────────────────────────
 
   Widget _buildModeSwitch() => Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -530,44 +524,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ],
       );
 
-  // ── Demo accounts ─────────────────────────────────────────────────────────
-
   Widget _buildDemoAccounts() => Column(
         children: [
-          const Text(
-            'Demo accounts',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-          ),
+          const Text('Demo accounts',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: _kDemos
-                .map(
-                  (d) => ActionChip(
-                    label: Text(d.label),
-                    labelStyle: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500),
-                    backgroundColor: Colors.white.withAlpha(20),
-                    side: BorderSide(color: Colors.white.withAlpha(51)),
-                    labelPadding:
-                        const EdgeInsets.symmetric(horizontal: 4),
-                    onPressed: () => _fillDemo(d.email, d.pass),
-                  ),
-                )
+                .map((d) => ActionChip(
+                      label: Text(d.label),
+                      labelStyle: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w500),
+                      backgroundColor: Colors.white.withAlpha(20),
+                      side: BorderSide(color: Colors.white.withAlpha(51)),
+                      onPressed: () => _fillDemo(d.email, d.pass),
+                    ))
                 .toList(),
           ),
         ],
       );
-
-  // ── Branding footer ───────────────────────────────────────────────────────
 
   Widget _buildBranding() => const Text(
         'By Malaka Cyprus · malaka.cy',
         textAlign: TextAlign.center,
         style: TextStyle(color: Color(0xFF475569), fontSize: 11),
       );
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   String _formatType(String t) => switch (t) {
         'RESTAURANT' => 'Restaurant',
@@ -577,4 +559,124 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         'SPA' => 'Spa',
         _ => t,
       };
+}
+
+// ─── Biometric lock screen ────────────────────────────────────────────────────
+
+class _BiometricLockScreen extends ConsumerStatefulWidget {
+  const _BiometricLockScreen({
+    required this.onUnlock,
+    required this.onUsePassword,
+  });
+
+  final VoidCallback onUnlock;
+  final VoidCallback onUsePassword;
+
+  @override
+  ConsumerState<_BiometricLockScreen> createState() =>
+      _BiometricLockScreenState();
+}
+
+class _BiometricLockScreenState extends ConsumerState<_BiometricLockScreen> {
+  String _bioLabel = 'Biometrics';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLabel();
+    // Trigger biometric prompt automatically on first show.
+    WidgetsBinding.instance.addPostFrameCallback((_) => widget.onUnlock());
+  }
+
+  Future<void> _loadLabel() async {
+    final label = await ref.read(biometricServiceProvider).label();
+    if (mounted) setState(() => _bioLabel = label);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = ref.watch(authStateProvider).isLoading;
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF312E81), Color(0xFF0F172A), Color(0xFF1E293B)],
+            stops: [0.0, 0.55, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(20),
+                      borderRadius: BorderRadius.circular(24),
+                      border:
+                          Border.all(color: Colors.white.withAlpha(40), width: 1.5),
+                    ),
+                    child: const Icon(Icons.fingerprint_rounded,
+                        color: Colors.white, size: 44),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Tourist Pass Cyprus',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Unlock with $_bioLabel to continue',
+                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isLoading ? null : widget.onUnlock,
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Icon(Icons.fingerprint_rounded),
+                      label: Text('Unlock with $_bioLabel'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: widget.onUsePassword,
+                    child: const Text(
+                      'Use password instead',
+                      style: TextStyle(color: Color(0xFF94A3B8)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

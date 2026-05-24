@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/models/user_model.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/screens/auth_screen.dart';
+import '../features/customer/screens/customer_app.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
@@ -53,9 +54,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.customer,
-        // Replaced in Phase 3 with real CustomerApp
-        builder: (_, __) =>
-            const _PlaceholderScreen(label: 'Tourist App — Phase 3'),
+        builder: (_, __) => const CustomerApp(),
       ),
       GoRoute(
         path: AppRoutes.merchant,

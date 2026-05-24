@@ -29,5 +29,15 @@ class SecureStorageService {
   Future<String?> getUserRole() =>
       _storage.read(key: ApiConstants.userRoleKey);
 
+  Future<void> setBiometricEnabled(bool enabled) => _storage.write(
+        key: ApiConstants.biometricKey,
+        value: enabled.toString(),
+      );
+
+  Future<bool> isBiometricEnabled() async {
+    final val = await _storage.read(key: ApiConstants.biometricKey);
+    return val == 'true';
+  }
+
   Future<void> clearAll() => _storage.deleteAll();
 }

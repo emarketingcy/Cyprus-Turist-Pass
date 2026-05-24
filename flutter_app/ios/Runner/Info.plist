@@ -24,6 +24,9 @@
     <string>$(FLUTTER_BUILD_NUMBER)</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <!-- Face ID for biometric login -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>Tourist Pass Cyprus uses Face ID so you can sign in quickly without entering your password.</string>
     <!-- Camera permission for QR scanning -->
     <key>NSCameraUsageDescription</key>
     <string>Tourist Pass Cyprus uses the camera to scan QR discount codes at merchant POS terminals.</string>
