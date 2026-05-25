@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter" />
-  <img src="https://img.shields.io/badge/Version-1.3.0-4F46E5" />
+  <img src="https://img.shields.io/badge/Version-1.3.1-4F46E5" />
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey" />
   <img src="https://img.shields.io/badge/Bundle%20ID-com.malaka.touristpass-4F46E5" />
   <img src="https://img.shields.io/badge/Backend-WordPress%20REST%20API-21759B?logo=wordpress" />
@@ -537,6 +537,9 @@ The web build is PWA-ready (`manifest.json` included).
 ---
 
 ## Changelog
+
+### v1.3.1 (2026-05-25)
+- Added: **Animated splash screen** — logo elastic scale-in + glow, title slide-up, tagline fade, 3-dot pulse loader; native splash dismissed on first frame so the animation is always seen
 
 ### v1.3.0 (2026-05-25)
 - Added: Full **Admin Panel** (Dashboard, Merchants, Transactions tabs) replacing the Phase 6 placeholder

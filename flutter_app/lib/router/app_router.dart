@@ -8,6 +8,7 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/screens/auth_screen.dart';
 import '../features/customer/screens/customer_app.dart';
 import '../features/merchant/screens/merchant_app.dart';
+import '../features/splash/splash_screen.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
@@ -48,7 +49,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.splash,
-        builder: (_, __) => const _SplashScreen(),
+        builder: (_, __) => const SplashScreen(),
       ),
       GoRoute(
         path: AppRoutes.auth,
@@ -77,20 +78,6 @@ String _homeForRole(UserRole role) => switch (role) {
     };
 
 // ─── Internal placeholder screens (removed when each phase lands) ────────────
-
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF0F172A),
-      body: Center(
-        child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
-      ),
-    );
-  }
-}
 
 class _PlaceholderScreen extends StatelessWidget {
   const _PlaceholderScreen({required this.label});

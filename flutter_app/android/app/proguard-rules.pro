@@ -13,3 +13,7 @@
 
 # Keep secure storage
 -keep class androidx.security.crypto.** { *; }
+
+# Flutter references Play Core split-install for deferred components but this
+# app doesn't ship dynamic feature modules — suppress the missing-class errors.
+-dontwarn com.google.android.play.core.**
