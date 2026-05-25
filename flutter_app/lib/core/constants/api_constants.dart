@@ -1,8 +1,17 @@
 abstract final class ApiConstants {
-  // Injected via --dart-define=API_BASE_URL=https://your-wp.com/wp-json
+  // ─────────────────────────────────────────────────────────────────────────
+  // API_BASE_URL — set this to your WordPress site's REST API root.
+  //
+  // HOW TO SET IT:
+  //   • VS Code  → edit .vscode/launch.json  (already configured — just paste your URL)
+  //   • Terminal → flutter run --dart-define=API_BASE_URL=https://yoursite.com/wp-json
+  //   • Quick edit → change the defaultValue string below
+  //
+  // Get your URL from: WP Admin → Tourist Pass → Settings → Flutter App Connection
+  // ─────────────────────────────────────────────────────────────────────────
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://your-wp-site.com/wp-json',
+    defaultValue: 'https://your-wp-site.com/wp-json', // ← change this if not using --dart-define
   );
   static const _ns = 'ctp/v1';
   static const apiBase = '$baseUrl/$_ns';
