@@ -28,6 +28,16 @@ class QrToken {
         merchantId: j['merchantId'] as int? ?? 0,
         merchantName: j['merchantName'] as String,
         discountRate: ((j['discountRate'] ?? 0) as num).toDouble(),
-        expiresAt: DateTime.parse(j['expiresAt'] as String),
+        expiresAt: _parseExpiry(j['expiresAt'] as String),
       );
+
+  // The WP server may return a bare 'Y-m-d H:i:s' string with no timezone
+  // indicator. PHP's date() uses the server's local timezone (often UTC on
+  // shared hosting). Treat any string that carries no offset/Z as UTC so
+  // the expiry comparison is correct regardless of the device's timezone.
+  static DateTime _parseExpiry(String s) {
+    final hasOffset = s.endsWith('Z') ||
+        RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(s);
+    return DateTime.parse(hasOffset ? s : '${s}Z');
+  }
 }
