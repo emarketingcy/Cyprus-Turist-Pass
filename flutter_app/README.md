@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter" />
-  <img src="https://img.shields.io/badge/Version-1.2.1-4F46E5" />
+  <img src="https://img.shields.io/badge/Version-1.3.0-4F46E5" />
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey" />
   <img src="https://img.shields.io/badge/Bundle%20ID-com.malaka.touristpass-4F46E5" />
   <img src="https://img.shields.io/badge/Backend-WordPress%20REST%20API-21759B?logo=wordpress" />
@@ -537,6 +537,11 @@ The web build is PWA-ready (`manifest.json` included).
 ---
 
 ## Changelog
+
+### v1.3.0 (2026-05-25)
+- Added: Full **Admin Panel** (Dashboard, Merchants, Transactions tabs) replacing the Phase 6 placeholder
+- Fixed: **Biometric authentication** — `MainActivity` changed from `FlutterActivity` to `FlutterFragmentActivity`; system biometric dialog now attaches correctly
+- Fixed: **QR code immediately expired** — server now returns expiry as explicit UTC (`Z` suffix); Flutter's `DateTime.parse` no longer misinterprets it as device-local time
 
 ### v1.2.1 (2026-05-25)
 - Fixed: `MerchantHistoryTab` showed blank name — `Transaction` model now parses `customerName` from API response and displays it for merchant-side transactions
