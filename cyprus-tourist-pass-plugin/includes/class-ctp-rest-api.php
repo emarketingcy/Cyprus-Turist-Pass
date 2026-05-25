@@ -5,6 +5,29 @@ class CTP_Rest_API {
 
     const NAMESPACE = 'ctp/v1';
 
+    // ── Demo contract ─────────────────────────────────────────────────────────
+    // GE12345 is a permanent demo / presentation contract that is always valid,
+    // never expires, and can be used by any number of users simultaneously.
+    const DEMO_CONTRACT = 'GE12345';
+
+    private static function _is_demo( $n ) {
+        return strtoupper( trim( $n ) ) === self::DEMO_CONTRACT;
+    }
+
+    private static function _demo_agency() {
+        return (object) array(
+            'name'            => 'GeoDrive Demo',
+            'slug'            => 'geodrive',
+            'contract_prefix' => 'GE',
+            'primary_color'   => '#4f46e5',
+            'secondary_color' => '#ffffff',
+            'accent_color'    => '#4f46e5',
+            'logo_url'        => null,
+            'logo_icon_url'   => null,
+        );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     public static function register_routes() {
 
         // Auth routes
@@ -261,24 +284,32 @@ class CTP_Rest_API {
 
                 if ( $agency ) {
                     $table_contracts = $wpdb->prefix . 'ctp_rental_contracts';
-                    $existing = $wpdb->get_var( $wpdb->prepare(
-                        "SELECT id FROM $table_contracts WHERE contract_number = %s",
-                        $contract_number
-                    ) );
+                    $is_demo         = self::_is_demo( $contract_number );
 
-                    if ( ! $existing ) {
-                        // Get customer profile ID
+                    // For the demo contract every new user gets their own row;
+                    // for real contracts block re-use by different users.
+                    $already_taken = false;
+                    if ( ! $is_demo ) {
+                        $already_taken = (bool) $wpdb->get_var( $wpdb->prepare(
+                            "SELECT id FROM $table_contracts WHERE contract_number = %s",
+                            $contract_number
+                        ) );
+                    }
+
+                    if ( ! $already_taken ) {
                         $customer = $wpdb->get_row( $wpdb->prepare(
                             "SELECT id FROM $table_customers WHERE user_id = %d",
                             $user_id
                         ) );
 
                         if ( $customer ) {
-                            $start_date = current_time( 'mysql' );
-                            $end_date   = date( 'Y-m-d H:i:s', strtotime( '+7 days' ) );
+                            $start_date      = current_time( 'mysql' );
+                            $end_date        = $is_demo
+                                ? date( 'Y-m-d H:i:s', strtotime( '+10 years' ) )
+                                : date( 'Y-m-d H:i:s', strtotime( '+7 days' ) );
                             $vehicle_classes = array( 'COMPACT', 'STANDARD', 'SUV', 'PREMIUM', 'CONVERTIBLE' );
-                            $hash = crc32( $contract_number );
-                            $vehicle_class = $vehicle_classes[ abs( $hash ) % count( $vehicle_classes ) ];
+                            $hash            = crc32( $contract_number );
+                            $vehicle_class   = $is_demo ? 'STANDARD' : $vehicle_classes[ abs( $hash ) % count( $vehicle_classes ) ];
 
                             $wpdb->insert( $table_contracts, array(
                                 'customer_id'     => $customer->id,
@@ -487,6 +518,11 @@ class CTP_Rest_API {
             );
         }
 
+        // Demo contract — always recognised regardless of DB agencies table
+        if ( self::_is_demo( $contract_number ) ) {
+            return self::_demo_agency();
+        }
+
         return null;
     }
 
@@ -535,16 +571,18 @@ class CTP_Rest_API {
             );
         }
 
-        // Check if contract is already used
-        global $wpdb;
-        $table_contracts = $wpdb->prefix . 'ctp_rental_contracts';
-        $existing = $wpdb->get_var( $wpdb->prepare(
-            "SELECT id FROM $table_contracts WHERE contract_number = %s",
-            $contract_number
-        ) );
+        // Demo contract skips the "already in use" gate — any user may validate it.
+        if ( ! self::_is_demo( $contract_number ) ) {
+            global $wpdb;
+            $table_contracts = $wpdb->prefix . 'ctp_rental_contracts';
+            $existing = $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM $table_contracts WHERE contract_number = %s",
+                $contract_number
+            ) );
 
-        if ( $existing ) {
-            return new WP_Error( 'contract_exists', 'This contract has already been validated by another user.', array( 'status' => 409 ) );
+            if ( $existing ) {
+                return new WP_Error( 'contract_exists', 'This contract has already been validated by another user.', array( 'status' => 409 ) );
+            }
         }
 
         return rest_ensure_response( array(
@@ -606,6 +644,47 @@ class CTP_Rest_API {
         } else {
             $customer_id = $customer->id;
         }
+
+        // ── Demo contract: upsert per customer, 10-year validity ──────────────
+        if ( self::_is_demo( $contract_number ) ) {
+            $far_future  = date( 'Y-m-d H:i:s', strtotime( '+10 years' ) );
+            $demo_row_id = $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM $table_contracts WHERE contract_number = %s AND customer_id = %d",
+                $contract_number, $customer_id
+            ) );
+
+            if ( $demo_row_id ) {
+                $wpdb->update(
+                    $table_contracts,
+                    array( 'is_valid' => 1, 'end_date' => $far_future ),
+                    array( 'id' => $demo_row_id )
+                );
+            } else {
+                $wpdb->insert( $table_contracts, array(
+                    'customer_id'     => $customer_id,
+                    'contract_number' => $contract_number,
+                    'agency_name'     => $agency_name,
+                    'agency_slug'     => $agency->slug,
+                    'start_date'      => current_time( 'mysql' ),
+                    'end_date'        => $far_future,
+                    'vehicle_class'   => 'STANDARD',
+                    'is_valid'        => 1,
+                ) );
+            }
+
+            return rest_ensure_response( array(
+                'message'        => 'Demo contract activated!',
+                'contractNumber' => $contract_number,
+                'agencyName'     => $agency_name,
+                'agencySlug'     => $agency->slug,
+                'startDate'      => current_time( 'mysql' ),
+                'endDate'        => $far_future,
+                'vehicleClass'   => 'STANDARD',
+                'isValid'        => true,
+                'agency'         => self::format_agency_branding( $agency ),
+            ) );
+        }
+        // ── Normal contract ───────────────────────────────────────────────────
 
         // Check if contract already exists
         $existing = $wpdb->get_var( $wpdb->prepare(
