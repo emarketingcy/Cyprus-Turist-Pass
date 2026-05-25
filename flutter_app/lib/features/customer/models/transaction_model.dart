@@ -40,7 +40,7 @@ class Transaction {
 
   factory Transaction.fromJson(Map<String, dynamic> j) => Transaction(
         id: j['id'] as int,
-        merchantName: j['merchantName'] as String,
+        merchantName: j['merchantName'] as String? ?? '',
         originalAmount: (j['originalAmount'] as num).toDouble(),
         discountAmount: (j['discountAmount'] as num).toDouble(),
         finalAmount: (j['finalAmount'] as num).toDouble(),

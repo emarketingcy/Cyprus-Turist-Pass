@@ -20,10 +20,13 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     if (err.response?.statusCode == 401) {
-      // Token expired / invalid — wipe credentials so router redirects to auth.
-      _storage.clearAll();
+      // Await so storage is fully cleared before the router redirect fires.
+      await _storage.clearAll();
     }
     handler.next(err);
   }

@@ -97,78 +97,78 @@ class CTP_Rest_API {
             'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
         ) );
 
-        // Admin routes
+        // Admin routes — permission enforced at route level (ADMIN role only).
         register_rest_route( self::NAMESPACE, '/admin/stats', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'admin_stats' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/merchants', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'admin_merchants' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/merchants/(?P<id>\d+)/status', array(
             'methods'             => 'PUT',
             'callback'            => array( __CLASS__, 'admin_update_merchant_status' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/merchants/(?P<id>\d+)/fee', array(
             'methods'             => 'PUT',
             'callback'            => array( __CLASS__, 'admin_update_merchant_fee' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/transactions', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'admin_transactions' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/customers', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'admin_customers' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/settings', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'admin_get_settings' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/settings', array(
             'methods'             => 'PUT',
             'callback'            => array( __CLASS__, 'admin_update_settings' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         // Admin rental agency routes
         register_rest_route( self::NAMESPACE, '/admin/agencies', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'admin_list_agencies' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/agencies', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'admin_create_agency' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/agencies/(?P<id>\d+)', array(
             'methods'             => 'PUT',
             'callback'            => array( __CLASS__, 'admin_update_agency' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
 
         register_rest_route( self::NAMESPACE, '/admin/agencies/(?P<id>\d+)', array(
             'methods'             => 'DELETE',
             'callback'            => array( __CLASS__, 'admin_delete_agency' ),
-            'permission_callback' => array( 'CTP_Auth', 'is_authenticated' ),
+            'permission_callback' => array( 'CTP_Auth', 'is_admin' ),
         ) );
     }
 
@@ -202,6 +202,22 @@ class CTP_Rest_API {
             return new WP_Error( 'email_exists', 'Email already registered.', array( 'status' => 409 ) );
         }
 
+        // Validate merchant fields before any DB writes to avoid orphaned rows.
+        $business_name = '';
+        $business_type = '';
+        $city          = '';
+        $address       = '';
+        if ( $role === 'MERCHANT' ) {
+            $business_name = sanitize_text_field( $params['businessName'] ?? '' );
+            $business_type = sanitize_text_field( $params['businessType'] ?? 'RESTAURANT' );
+            $city          = sanitize_text_field( $params['city'] ?? '' );
+            $address       = sanitize_text_field( $params['address'] ?? '' );
+
+            if ( ! $business_name ) {
+                return new WP_Error( 'missing_business', 'Business name is required.', array( 'status' => 400 ) );
+            }
+        }
+
         $wpdb->insert( $table_users, array(
             'email'         => $email,
             'password_hash' => CTP_Auth::hash_password( $password ),
@@ -214,15 +230,6 @@ class CTP_Rest_API {
         if ( $role === 'CUSTOMER' ) {
             $wpdb->insert( $table_customers, array( 'user_id' => $user_id ) );
         } elseif ( $role === 'MERCHANT' ) {
-            $business_name = sanitize_text_field( $params['businessName'] ?? '' );
-            $business_type = sanitize_text_field( $params['businessType'] ?? 'RESTAURANT' );
-            $city          = sanitize_text_field( $params['city'] ?? '' );
-            $address       = sanitize_text_field( $params['address'] ?? '' );
-
-            if ( ! $business_name ) {
-                return new WP_Error( 'missing_business', 'Business name is required.', array( 'status' => 400 ) );
-            }
-
             $wpdb->insert( $table_merchants, array(
                 'user_id'       => $user_id,
                 'business_name' => $business_name,
@@ -448,13 +455,17 @@ class CTP_Rest_API {
     /**
      * Detect agency from contract number prefix
      */
+    private static $_agencies_cache = null;
+
     private static function detect_agency_from_contract( $contract_number ) {
         global $wpdb;
         $table_agencies = $wpdb->prefix . 'ctp_rental_agencies';
         $upper = strtoupper( $contract_number );
 
-        // Get all active agencies and check prefix
-        $agencies = $wpdb->get_results( "SELECT * FROM $table_agencies WHERE is_active = 1" );
+        if ( self::$_agencies_cache === null ) {
+            self::$_agencies_cache = $wpdb->get_results( "SELECT * FROM $table_agencies WHERE is_active = 1" );
+        }
+        $agencies = self::$_agencies_cache;
         foreach ( $agencies as $agency ) {
             $prefix = strtoupper( $agency->contract_prefix );
             if ( strpos( $upper, $prefix . '-' ) === 0 || strpos( $upper, $prefix ) === 0 ) {
@@ -803,7 +814,8 @@ class CTP_Rest_API {
             return new WP_Error( 'forbidden', 'Only merchants can update profiles.', array( 'status' => 403 ) );
         }
 
-        $params = $request->get_json_params();
+        // get_json_params() returns null for multipart/form-data; fall back to get_params().
+        $params = $request->get_json_params() ?: $request->get_params();
         $update = array();
 
         if ( isset( $params['discountRate'] ) ) {
@@ -1016,10 +1028,18 @@ class CTP_Rest_API {
             return new WP_Error( 'invalid_qr', 'Invalid or already used QR token.', array( 'status' => 400 ) );
         }
 
+        if ( strtotime( $qr->expires_at ) < time() ) {
+            return new WP_Error( 'token_expired', 'This QR token has expired.', array( 'status' => 400 ) );
+        }
+
         $merchant = $wpdb->get_row( $wpdb->prepare(
             "SELECT * FROM $table_merchants WHERE user_id = %d",
             $auth_user['userId']
         ) );
+
+        if ( ! $merchant || (int) $merchant->id !== (int) $qr->merchant_id ) {
+            return new WP_Error( 'wrong_merchant', 'This QR code is for a different merchant.', array( 'status' => 403 ) );
+        }
 
         $discount_rate    = floatval( $qr->discount_rate );
         $discount_amount  = round( $original_amount * ( $discount_rate / 100 ), 2 );
@@ -1032,6 +1052,15 @@ class CTP_Rest_API {
 
         // Simulate Stripe payment ID
         $stripe_id = 'pi_simulated_' . bin2hex( random_bytes( 12 ) );
+
+        // Atomic mark-used: prevents double-spend under concurrent requests.
+        $claimed = $wpdb->query( $wpdb->prepare(
+            "UPDATE $table_qr SET used = 1 WHERE id = %d AND used = 0",
+            $qr->id
+        ) );
+        if ( ! $claimed ) {
+            return new WP_Error( 'invalid_qr', 'Invalid or already used QR token.', array( 'status' => 400 ) );
+        }
 
         $wpdb->insert( $table_transactions, array(
             'customer_id'       => $qr->customer_id,
@@ -1047,14 +1076,12 @@ class CTP_Rest_API {
             'status'            => 'COMPLETED',
             'stripe_payment_id' => $stripe_id,
         ) );
-
-        // Mark QR as used
-        $wpdb->update( $table_qr, array( 'used' => 1 ), array( 'id' => $qr->id ) );
+        $transaction_id = $wpdb->insert_id;
 
         return rest_ensure_response( array(
             'success'        => true,
             'status'         => 'COMPLETED',
-            'transactionId'  => $wpdb->insert_id,
+            'transactionId'  => $transaction_id,
             'originalAmount' => $original_amount,
             'discountRate'   => $discount_rate,
             'discountAmount' => $discount_amount,
@@ -1349,7 +1376,11 @@ class CTP_Rest_API {
                     (SELECT COUNT(*) FROM $table_transactions WHERE customer_id = c.id) as transaction_count
              FROM $table_users u
              LEFT JOIN $table_customers c ON c.user_id = u.id
-             LEFT JOIN $table_contracts rc ON rc.customer_id = c.id AND rc.is_valid = 1
+             LEFT JOIN $table_contracts rc ON rc.id = (
+                 SELECT id FROM $table_contracts
+                 WHERE customer_id = c.id AND is_valid = 1
+                 ORDER BY created_at DESC LIMIT 1
+             )
              WHERE u.role = 'CUSTOMER'
              ORDER BY u.created_at DESC"
         );

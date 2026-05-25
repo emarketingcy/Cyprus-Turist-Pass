@@ -80,6 +80,14 @@ class CTP_Auth {
     }
 
     /**
+     * Permission callback restricted to ADMIN role.
+     */
+    public static function is_admin( $request ) {
+        $user = self::get_user_from_request( $request );
+        return $user !== null && isset( $user['role'] ) && $user['role'] === 'ADMIN';
+    }
+
+    /**
      * Hash a password
      */
     public static function hash_password( $password ) {
