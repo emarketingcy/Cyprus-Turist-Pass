@@ -953,8 +953,8 @@
             <form id="ctp-validate-form">
                 <div class="ctp-form-group">
                     <label>Contract Number</label>
-                    <input type="text" class="ctp-input" id="ctp-contract-number" placeholder="e.g. HZ-12345 or SX-12345" required style="text-transform:uppercase;font-family:monospace;letter-spacing:1px;">
-                    <p class="ctp-text-xs ctp-text-muted ctp-mt-4">Enter your contract number. The prefix determines the agency (HZ = Hertz, SX = Sixt).</p>
+                    <input type="text" class="ctp-input" id="ctp-contract-number" placeholder="e.g. HZ-12345, SX-12345 or GE12345" required style="text-transform:uppercase;font-family:monospace;letter-spacing:1px;">
+                    <p class="ctp-text-xs ctp-text-muted ctp-mt-4">Enter your contract number. The prefix determines the agency (HZ = Hertz, SX = Sixt). <strong>Demo:</strong> use <code>GE12345</code> — always valid.</p>
                 </div>
                 <button type="submit" class="ctp-btn ctp-btn-primary ctp-btn-full" id="ctp-validate-btn">
                     Validate Contract
