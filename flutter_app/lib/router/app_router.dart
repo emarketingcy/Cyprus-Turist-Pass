@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/admin/screens/admin_app.dart';
 import '../features/auth/models/user_model.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/screens/auth_screen.dart';
@@ -63,8 +64,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.admin,
-        builder: (_, __) =>
-            const _PlaceholderScreen(label: 'Admin — Phase 6'),
+        builder: (_, __) => const AdminApp(),
       ),
     ],
   );

@@ -904,9 +904,10 @@ class CTP_Rest_API {
             return new WP_Error( 'merchant_not_found', 'Merchant not found or not approved.', array( 'status' => 404 ) );
         }
 
-        // Generate QR token
+        // Generate QR token — always store expiry in UTC so strtotime() and
+        // Flutter's DateTime.parse('...Z') both interpret it unambiguously.
         $token      = bin2hex( random_bytes( 32 ) );
-        $expires_at = date( 'Y-m-d H:i:s', time() + ( 15 * MINUTE_IN_SECONDS ) );
+        $expires_at = gmdate( 'Y-m-d H:i:s', time() + ( 15 * MINUTE_IN_SECONDS ) );
 
         $wpdb->insert( $table_qr, array(
             'token'         => $token,
@@ -922,7 +923,7 @@ class CTP_Rest_API {
             'merchantId'   => $merchant_id,
             'merchantName' => $merchant->business_name,
             'discountRate' => floatval( $merchant->discount_rate ),
-            'expiresAt'    => $expires_at,
+            'expiresAt'    => $expires_at . 'Z',
         ) );
     }
 
@@ -993,7 +994,7 @@ class CTP_Rest_API {
             'discountRate'    => floatval( $qr->discount_rate ),
             'merchantName'    => $merchant->business_name,
             'platformFeeRate' => $platform_fee_rate,
-            'expiresAt'       => $qr->expires_at,
+            'expiresAt'       => rtrim( $qr->expires_at, 'Z' ) . 'Z',
         ) );
     }
 

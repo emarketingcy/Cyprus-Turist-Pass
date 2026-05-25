@@ -2,6 +2,15 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.2] - 2026-05-25
+
+### Added (Flutter v1.3.0)
+- **Admin dashboard** — full native admin panel with Dashboard (stats overview + recent transactions), Merchants (approve / suspend / reject with live status badges), and Transactions (paginated list) tabs; replaces the "Phase 6" placeholder screen
+
+### Fixed
+- **Biometric unlock does nothing** — `MainActivity` was extending `FlutterActivity`; `local_auth` requires `FlutterFragmentActivity` to attach the system biometric dialog
+- **QR code immediately expired** — PHP `date()` formatted expiry in the server's local timezone without timezone info; Flutter parsed it as device-local time, creating a mismatch. Changed to `gmdate()` + `'Z'` suffix on both `create_qr` and `validate_qr` responses so `DateTime.parse` correctly treats the timestamp as UTC
+
 ## [2.3.1] - 2026-05-25
 
 ### Fixed (Flutter v1.2.1)
