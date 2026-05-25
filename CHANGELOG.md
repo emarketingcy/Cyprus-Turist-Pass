@@ -2,6 +2,15 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.1] - 2026-05-25
+
+### Fixed (Flutter v1.2.1)
+- `MerchantHistoryTab`: transaction rows showed empty merchant name — `Transaction` model now parses `customerName` from WP response and displays it in the merchant history view
+- `SettingsTab`: `_initFromProfile()` was called inside `build()` on every frame — moved to `didChangeDependencies()` with a `setState()` so the discount-rate slider renders correctly from the first build
+- `QrTab._generate()`: no `mounted` check after `await generate()` — `WakelockPlus.enable()` and `_startTimer()` could be called after the widget was disposed
+- `PosTab._triggerFailFeedback()`: missing `mounted` guard after `Future.delayed` — `_flashCtrl.forward()` could fire on a disposed AnimationController
+- `auth_screen.dart`: wrong demo merchant email `ocean@merchant.com` corrected to `ocean@cypruspass.com`
+
 ## [2.3.0] - 2026-05-25
 
 ### Added

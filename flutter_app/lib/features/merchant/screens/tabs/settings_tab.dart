@@ -28,14 +28,22 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initFromProfile();
+  }
+
   void _initFromProfile() {
     if (_initialized) return;
     final profile = ref.read(authStateProvider).user?.merchantProfile;
     if (profile == null) return;
-    _nameCtrl.text = profile.businessName;
-    _descCtrl.text = profile.description ?? '';
-    _rate = profile.discountRate.clamp(5.0, 50.0);
-    _initialized = true;
+    setState(() {
+      _nameCtrl.text = profile.businessName;
+      _descCtrl.text = profile.description ?? '';
+      _rate = profile.discountRate.clamp(5.0, 50.0);
+      _initialized = true;
+    });
   }
 
   // ── Save ─────────────────────────────────────────────────────────────────
@@ -55,8 +63,6 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
 
   @override
   Widget build(BuildContext context) {
-    _initFromProfile();
-
     final settings = ref.watch(settingsProvider);
     final profile = ref.watch(authStateProvider).user?.merchantProfile;
 
