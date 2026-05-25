@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter" />
-  <img src="https://img.shields.io/badge/Version-1.1.0-4F46E5" />
+  <img src="https://img.shields.io/badge/Version-1.2.0-4F46E5" />
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey" />
   <img src="https://img.shields.io/badge/Bundle%20ID-com.malaka.touristpass-4F46E5" />
   <img src="https://img.shields.io/badge/Backend-WordPress%20REST%20API-21759B?logo=wordpress" />
@@ -537,6 +537,13 @@ The web build is PWA-ready (`manifest.json` included).
 ---
 
 ## Changelog
+
+### v1.2.0 (2026-05-25)
+- Fixed: `ClassNotFoundException: MainActivity` on both debug and release builds — Kotlin plugin (`org.jetbrains.kotlin.android`) was missing from `app/build.gradle.kts`; ProGuard rule added to prevent R8 stripping the class in release
+- Fixed: `Transaction.fromJson` crash on merchant history tab — `merchantName` is absent from merchant-side API responses; made field nullable with empty-string fallback
+- Fixed: After login / register, `UserModel.contract` and `UserModel.merchantProfile` were null until next session restore; service now calls `/auth/me` immediately post-login
+- Fixed: `AuthInterceptor` — `clearAll()` was unawaited on 401 response; storage now fully cleared before GoRouter redirect fires
+- Added: WordPress admin Settings page now shows a **Flutter App Connection** panel with auto-generated `API_BASE_URL` and one-click copy for build/run commands — no more manual URL configuration
 
 ### v1.1.0 (2026-05-24)
 - Add web platform support (`web/` directory, `manifest.json`, PWA config)

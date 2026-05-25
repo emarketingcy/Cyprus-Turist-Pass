@@ -47,9 +47,10 @@ class CTP_Admin {
     }
 
     public static function render_admin_page() {
-        $merchants_count = self::get_count( 'ctp_merchant_profiles' );
-        $customers_count = self::get_count( 'ctp_users', "role = 'CUSTOMER'" );
+        $merchants_count    = self::get_count( 'ctp_merchant_profiles' );
+        $customers_count    = self::get_count( 'ctp_users', "role = 'CUSTOMER'" );
         $transactions_count = self::get_count( 'ctp_transactions' );
+        $api_base_url       = untrailingslashit( rest_url() );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Cyprus Tourist Pass', 'cyprus-tourist-pass' ); ?></h1>
@@ -69,9 +70,11 @@ class CTP_Admin {
                 </div>
             </div>
 
+            <?php self::render_flutter_connection_box( $api_base_url ); ?>
+
             <h2>Quick Start</h2>
             <p>Use the shortcode <code>[cyprus_tourist_pass]</code> on any page to display the full application.</p>
-            <p>Visit <a href="<?php echo admin_url( 'admin.php?page=cyprus-tourist-pass-help' ); ?>">Help & Shortcodes</a> for all available shortcodes.</p>
+            <p>Visit <a href="<?php echo esc_url( admin_url( 'admin.php?page=cyprus-tourist-pass-help' ) ); ?>">Help &amp; Shortcodes</a> for all available shortcodes.</p>
 
             <h2>Demo Accounts</h2>
             <table class="widefat fixed striped">
@@ -92,6 +95,70 @@ class CTP_Admin {
         <?php
     }
 
+    /**
+     * Reusable Flutter connection box — shown on dashboard and settings.
+     */
+    private static function render_flutter_connection_box( $api_base_url ) {
+        $build_cmd = 'flutter build apk --dart-define=API_BASE_URL=' . $api_base_url;
+        $run_cmd   = 'flutter run --dart-define=API_BASE_URL=' . $api_base_url;
+        ?>
+        <div class="ctp-connection-box">
+            <h2 style="margin-top:0;">&#128247; Flutter App — API Connection</h2>
+            <p>Copy the URL below and use it when building or running the Flutter app so it connects to <strong>this</strong> WordPress installation.</p>
+
+            <table class="form-table" style="margin:0;">
+                <tr>
+                    <th style="width:180px;">API Base URL</th>
+                    <td>
+                        <div class="ctp-copy-row">
+                            <input type="text" readonly id="ctp-api-url"
+                                   value="<?php echo esc_attr( $api_base_url ); ?>"
+                                   class="regular-text code" onclick="this.select()">
+                            <button type="button" class="button ctp-copy-btn" data-target="ctp-api-url">Copy</button>
+                        </div>
+                        <p class="description">Set this as <code>API_BASE_URL</code> in your Flutter build.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Build (Release APK)</th>
+                    <td>
+                        <div class="ctp-copy-row">
+                            <input type="text" readonly id="ctp-build-cmd"
+                                   value="<?php echo esc_attr( $build_cmd ); ?>"
+                                   class="large-text code" onclick="this.select()">
+                            <button type="button" class="button ctp-copy-btn" data-target="ctp-build-cmd">Copy</button>
+                        </div>
+                        <p class="description">Run inside <code>flutter_app/</code>. For iOS replace <code>apk</code> with <code>ipa</code>.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Debug / Dev Run</th>
+                    <td>
+                        <div class="ctp-copy-row">
+                            <input type="text" readonly id="ctp-run-cmd"
+                                   value="<?php echo esc_attr( $run_cmd ); ?>"
+                                   class="large-text code" onclick="this.select()">
+                            <button type="button" class="button ctp-copy-btn" data-target="ctp-run-cmd">Copy</button>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <script>
+        document.querySelectorAll('.ctp-copy-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var el = document.getElementById(btn.dataset.target);
+                el.select();
+                navigator.clipboard.writeText(el.value).then(function() {
+                    btn.textContent = 'Copied!';
+                    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+                });
+            });
+        });
+        </script>
+        <?php
+    }
+
     public static function render_settings_page() {
         $saved = false;
         if ( isset( $_POST['ctp_save_settings'] ) && check_admin_referer( 'ctp_settings_nonce' ) ) {
@@ -105,12 +172,15 @@ class CTP_Admin {
             $saved = true;
         }
 
-        $fee = CTP_Database::get_setting( 'default_platform_fee', 10 );
-        $min = CTP_Database::get_setting( 'minimum_discount_rate', 5 );
-        $max = CTP_Database::get_setting( 'maximum_discount_rate', 25 );
+        $fee          = CTP_Database::get_setting( 'default_platform_fee', 10 );
+        $min          = CTP_Database::get_setting( 'minimum_discount_rate', 5 );
+        $max          = CTP_Database::get_setting( 'maximum_discount_rate', 25 );
+        $api_base_url = untrailingslashit( rest_url() );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Platform Settings', 'cyprus-tourist-pass' ); ?></h1>
+
+            <?php self::render_flutter_connection_box( $api_base_url ); ?>
 
             <?php if ( $saved ) : ?>
                 <div class="notice notice-success"><p>Settings saved successfully.</p></div>
@@ -223,9 +293,12 @@ class CTP_Admin {
     }
 
     public static function render_help_page() {
+        $api_base_url = untrailingslashit( rest_url() );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Help & Shortcodes', 'cyprus-tourist-pass' ); ?></h1>
+
+            <?php self::render_flutter_connection_box( $api_base_url ); ?>
 
             <h2>Available Shortcodes</h2>
             <table class="widefat fixed striped">
