@@ -55,3 +55,31 @@
     max-width: 80px;
     object-fit: contain;
 }
+
+/* Flutter Connection Box */
+.ctp-connection-box {
+    background: #f0f4ff;
+    border: 1px solid #c7d2fe;
+    border-left: 4px solid #4f46e5;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0 28px;
+    max-width: 960px;
+}
+
+.ctp-copy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ctp-copy-row input[type="text"] {
+    font-family: monospace;
+    font-size: 12px;
+    background: #fff;
+}
+
+.ctp-copy-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}

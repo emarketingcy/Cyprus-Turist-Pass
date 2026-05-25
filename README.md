@@ -66,6 +66,22 @@ All REST routes are served under `/wp-json/ctp/v1/`.
 
 ## Changelog
 
+### [2.3.0] - 2026-05-25
+- Added: WordPress admin **Flutter App Connection** panel (Dashboard, Settings, Help pages) — auto-generates `API_BASE_URL` from the live site URL with one-click copy buttons for the build and run commands
+- Fixed: `process_payment` — any authenticated merchant could process a QR token issued for a different merchant (missing ownership check)
+- Fixed: `process_payment` — expired QR tokens were accepted (expiry check existed in `validate_qr` but not here)
+- Fixed: `process_payment` — race condition: concurrent requests could double-spend the same token; replaced read-then-write with an atomic `UPDATE WHERE used=0`
+- Fixed: `register_user` — merchant validation ran after the user row was inserted, leaving an orphaned row on 400 responses
+- Fixed: `update_merchant_profile` — file-upload profile saves always returned 400 "no fields" because `get_json_params()` returns `null` for multipart requests
+- Fixed: `admin_customers` — non-aggregated LEFT JOIN returned duplicate rows per customer with multiple contracts
+- Fixed: `detect_agency_from_contract` — added static request-level cache to eliminate repeated full-table scans
+- Fixed: All `/admin/*` REST routes now use a dedicated `is_admin` permission callback instead of `is_authenticated`
+- Fixed (Flutter): `Transaction.fromJson` — hard crash on merchant history tab when `merchantName` is absent
+- Fixed (Flutter): `AuthService.login` / `register` — post-login `UserModel` lacked `contract` and `merchantProfile`; now calls `/auth/me` immediately
+- Fixed (Flutter): `AuthInterceptor.onError` — `clearAll()` was fire-and-forget; now awaited before GoRouter redirect
+- Fixed (Android): `ClassNotFoundException: MainActivity` in release builds — added `-keep class com.malaka.touristpass.**` to ProGuard rules
+- Fixed (Android): `ClassNotFoundException: MainActivity` in debug builds — `org.jetbrains.kotlin.android` plugin was declared in `settings.gradle.kts` with `apply false` but never applied to the app module
+
 ### [2.2.0] - 2026-05-25
 - Added: CORS headers (`Access-Control-Allow-*`) for Flutter web support — OPTIONS preflight handled automatically
 - Fixed: `POST /payment/create-qr` now returns `qrToken` (renamed from `token`) and `merchantId`

@@ -2,6 +2,28 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.0] - 2026-05-25
+
+### Added
+- **WordPress admin: Flutter App Connection panel** — visible on Dashboard, Settings, and Help pages. Automatically derives the `API_BASE_URL` from the live WordPress REST URL and provides one-click copy buttons for the `flutter run` and `flutter build apk/ipa` commands. No manual URL hunting required.
+
+### Security
+- `process_payment`: added merchant-QR ownership check — any authenticated merchant could previously process a QR token issued for a different merchant (403 now returned on mismatch)
+- `process_payment`: added QR expiry check — tokens past `expires_at` were accepted without validation
+- All `/admin/*` REST routes: replaced `is_authenticated` permission callback with a dedicated `is_admin` callback; WordPress now rejects non-admin JWTs at the routing layer rather than inside each handler
+
+### Fixed
+- `process_payment`: race condition — concurrent requests could double-spend the same QR token; replaced read-then-write pattern with atomic `UPDATE … WHERE used=0`
+- `register_user`: merchant business-name validation ran after the user row was inserted, leaving an orphaned row that permanently blocked re-registration with that email
+- `update_merchant_profile`: file-upload (multipart/form-data) profile saves always returned 400 "no fields to update" because `get_json_params()` returns null for non-JSON content types; added `get_params()` fallback
+- `admin_customers`: non-aggregated LEFT JOIN on `ctp_rental_contracts` produced duplicate rows for customers with multiple valid contracts; replaced with correlated subquery
+- `detect_agency_from_contract`: added static request-level cache — function was executing a full `SELECT *` on every call (up to 3× per request)
+- Flutter `Transaction.fromJson`: hard crash on merchant history tab — `merchantName` cast as non-nullable String but absent from merchant-side transaction responses
+- Flutter `AuthService`: login and register now call `/auth/me` immediately so `UserModel.contract` and `UserModel.merchantProfile` are populated from the first frame
+- Flutter `AuthInterceptor`: `clearAll()` was fire-and-forget in `void onError`; changed override to async and awaited before GoRouter redirect fires
+- Android: `ClassNotFoundException: com.malaka.touristpass.MainActivity` in release builds — added `-keep class com.malaka.touristpass.**` to ProGuard rules
+- Android: `ClassNotFoundException: com.malaka.touristpass.MainActivity` in debug builds — Kotlin Gradle plugin was declared with `apply false` in `settings.gradle.kts` but never applied to the app module in `app/build.gradle.kts`
+
 ## [2.0.0] - 2026-03-16
 
 ### Added
