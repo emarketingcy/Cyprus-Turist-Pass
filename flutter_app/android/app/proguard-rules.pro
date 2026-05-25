@@ -2,6 +2,9 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# App entry point — R8 must not rename or strip MainActivity
+-keep class com.malaka.touristpass.** { *; }
+
 # Keep local_auth classes
 -keep class androidx.biometric.** { *; }
 
