@@ -2,6 +2,14 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.4] - 2026-05-25
+
+### Added
+- **Demo contract `GE12345`** — permanent, multi-user, never-expires demo contract for presentations and QA. Any number of users can validate it simultaneously; re-validating refreshes the end date to 10 years from now. Recognised in all code paths: registration, pre-check, validate, and WP admin. Contract input screen now shows "Demo: use GE12345 — always valid" helper text.
+
+### Fixed
+- **QR code immediately expired (client-side)** — `QrToken._parseExpiry()` now appends `'Z'` before parsing if the server returns a datetime string with no timezone offset, ensuring correct UTC interpretation on Cyprus-timezone devices even before the PHP-side `gmdate()` fix is deployed.
+
 ## [2.3.3] - 2026-05-25
 
 ### Added (Flutter v1.3.1)
