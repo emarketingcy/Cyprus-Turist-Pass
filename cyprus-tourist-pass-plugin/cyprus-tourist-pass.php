@@ -3,7 +3,7 @@
  * Plugin Name: Cyprus Tourist Pass
  * Plugin URI: https://emarketing.cy
  * Description: A tourist discount pass platform for Cyprus. Validates rental car contracts and provides exclusive merchant discounts via QR codes.
- * Version: 2.3.5
+ * Version: 2.3.6
  * Author: eMarketing Cyprus by Saltpixek Team
  * Author URI: https://eMarketing.cy
  * License: GPL v2 or later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'CTP_VERSION', '2.3.5' );
+define( 'CTP_VERSION', '2.3.6' );
 define( 'CTP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CTP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CTP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
