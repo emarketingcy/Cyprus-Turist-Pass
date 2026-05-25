@@ -83,6 +83,7 @@ class _QrTabState extends ConsumerState<QrTab> with WidgetsBindingObserver {
   Future<void> _generate() async {
     if (_merchantId == null) return;
     await ref.read(qrProvider.notifier).generate(_merchantId!);
+    if (!mounted) return;
     final token = ref.read(qrProvider).valueOrNull;
     if (token != null) {
       WakelockPlus.enable();

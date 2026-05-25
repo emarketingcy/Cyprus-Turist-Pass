@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Tourist Pass — Debug",
+      "request": "launch",
+      "type": "dart",
+      // ─────────────────────────────────────────────────────────────────
+      // PASTE YOUR WORDPRESS URL HERE (copy it from WP Admin → Settings)
+      // Example: "https://yoursite.com/wp-json"
+      // ─────────────────────────────────────────────────────────────────
+      "args": [
+        "--dart-define=API_BASE_URL=https://your-wp-site.com/wp-json"
+      ]
+    },
+    {
+      "name": "Tourist Pass — Release (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile",
+      "args": [
+        "--dart-define=API_BASE_URL=https://your-wp-site.com/wp-json"
+      ]
+    }
+  ]
+}

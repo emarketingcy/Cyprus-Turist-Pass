@@ -24,7 +24,7 @@ const _kCities = [
 
 const _kDemos = [
   (label: 'Tourist', email: 'tourist@example.com', pass: 'password123'),
-  (label: 'Merchant', email: 'ocean@merchant.com', pass: 'password123'),
+  (label: 'Merchant', email: 'ocean@cypruspass.com', pass: 'password123'),
   (label: 'Admin', email: 'admin@cypruspass.com', pass: 'password123'),
 ];
 

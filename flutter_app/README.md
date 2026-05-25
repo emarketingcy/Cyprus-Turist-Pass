@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter" />
-  <img src="https://img.shields.io/badge/Version-1.2.0-4F46E5" />
+  <img src="https://img.shields.io/badge/Version-1.2.1-4F46E5" />
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey" />
   <img src="https://img.shields.io/badge/Bundle%20ID-com.malaka.touristpass-4F46E5" />
   <img src="https://img.shields.io/badge/Backend-WordPress%20REST%20API-21759B?logo=wordpress" />
@@ -537,6 +537,13 @@ The web build is PWA-ready (`manifest.json` included).
 ---
 
 ## Changelog
+
+### v1.2.1 (2026-05-25)
+- Fixed: `MerchantHistoryTab` showed blank name — `Transaction` model now parses `customerName` from API response and displays it for merchant-side transactions
+- Fixed: `SettingsTab` discount-rate slider initialized to wrong value — `_initFromProfile()` moved to `didChangeDependencies()` with `setState()` so the slider reflects the saved rate from the first frame
+- Fixed: `QrTab._generate()` missing `mounted` guard after async gap — `WakelockPlus.enable()` and `_startTimer()` could run on a disposed widget
+- Fixed: `PosTab._triggerFailFeedback()` missing `mounted` guard after `Future.delayed` — `_flashCtrl.forward()` could fire on a disposed `AnimationController`
+- Fixed: Wrong demo merchant email in login screen (`ocean@merchant.com` → `ocean@cypruspass.com`)
 
 ### v1.2.0 (2026-05-25)
 - Fixed: `ClassNotFoundException: MainActivity` on both debug and release builds — Kotlin plugin (`org.jetbrains.kotlin.android`) was missing from `app/build.gradle.kts`; ProGuard rule added to prevent R8 stripping the class in release

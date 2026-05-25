@@ -73,7 +73,10 @@ class MerchantHistoryTab extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(t.merchantName,
+                    Text(
+                        t.customerName.isNotEmpty
+                            ? t.customerName
+                            : t.merchantName,
                         style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
