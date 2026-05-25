@@ -3,7 +3,6 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/auth/providers/auth_provider.dart';
 import 'router/app_router.dart';
 
 class TouristPassApp extends ConsumerWidget {
@@ -11,12 +10,9 @@ class TouristPassApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Dismiss the native splash as soon as the auth state finishes loading.
-    ref.listen<AuthState>(authStateProvider, (prev, next) {
-      if ((prev == null || prev.isLoading) && !next.isLoading) {
-        FlutterNativeSplash.remove();
-      }
-    });
+    // Drop the native splash on the first Flutter frame so our animated
+    // SplashScreen is immediately visible while auth loads in the background.
+    FlutterNativeSplash.remove();
 
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(

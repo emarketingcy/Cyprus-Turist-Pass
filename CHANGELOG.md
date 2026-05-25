@@ -2,6 +2,11 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.3] - 2026-05-25
+
+### Added (Flutter v1.3.1)
+- **Animated splash screen** — replaces the static loading spinner with a full animated intro: logo scales in with elastic overshoot + glow pulse, app name slides up with a fade, tagline fades in, 3-dot sequential pulse loader at the bottom. Native splash is now dismissed immediately on first Flutter frame so the animation is always visible.
+
 ## [2.3.2] - 2026-05-25
 
 ### Added (Flutter v1.3.0)
