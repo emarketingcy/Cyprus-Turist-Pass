@@ -98,8 +98,9 @@ class _ValidateTabState extends ConsumerState<ValidateTab> {
                   controller: _ctrl,
                   textCapitalization: TextCapitalization.characters,
                   decoration: const InputDecoration(
-                    hintText: 'e.g. TEST12345 or HZ98765',
+                    hintText: 'e.g. HZ98765 or SX54321',
                     prefixIcon: Icon(Icons.confirmation_number_outlined),
+                    helperText: 'Demo: use GE12345 — always valid',
                   ),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Enter a contract number' : null,
