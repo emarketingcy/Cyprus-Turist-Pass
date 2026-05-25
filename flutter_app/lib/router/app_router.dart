@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -78,8 +79,27 @@ String _homeForRole(UserRole role) => switch (role) {
 
 // ─── Internal placeholder screens (removed when each phase lands) ────────────
 
-class _SplashScreen extends StatelessWidget {
+class _SplashScreen extends ConsumerStatefulWidget {
   const _SplashScreen();
+
+  @override
+  ConsumerState<_SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<_SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Remove the native splash once auth state finishes loading.
+    // listenManual fires immediately, so if already loaded it removes at once.
+    ref.listenManual<AuthState>(
+      authStateProvider,
+      (_, next) {
+        if (!next.isLoading) FlutterNativeSplash.remove();
+      },
+      fireImmediately: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
