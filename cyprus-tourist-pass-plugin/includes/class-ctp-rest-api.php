@@ -812,6 +812,22 @@ class CTP_Rest_API {
             );
         }
 
+        // Always include the built-in demo agency so the web interface and app
+        // show the GE12345 quick-demo card without needing a DB entry.
+        $result[] = array(
+            'id'             => 0,
+            'name'           => 'GeoDrive Demo',
+            'slug'           => 'geodrive',
+            'contractPrefix' => 'GE',
+            'primaryColor'   => '#4f46e5',
+            'secondaryColor' => '#ffffff',
+            'accentColor'    => '#4f46e5',
+            'logoUrl'        => null,
+            'logoIconUrl'    => null,
+            'isDemo'         => true,
+            'demoContract'   => self::DEMO_CONTRACT,
+        );
+
         return rest_ensure_response( $result );
     }
 

@@ -2,6 +2,12 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.5] - 2026-05-25
+
+### Fixed (Web frontend)
+- **QR code immediately expired on website** — `new Date(expiresAt)` parsed UTC server timestamps as local time on Cyprus-timezone browsers; added `parseUtcDate()` helper that appends `'Z'` when no timezone offset is present, matching the Flutter fix from v2.3.2
+- **Login does not populate contract / merchant profile** — `handleLoginSuccess()` stored `result.user` directly from the login response which lacks `contract` and `merchantProfile`; now calls `/auth/me` immediately after login (same fix as Flutter v2.3.1) with a fallback to `result.user` if the second call fails
+
 ## [2.3.4] - 2026-05-25
 
 ### Added
