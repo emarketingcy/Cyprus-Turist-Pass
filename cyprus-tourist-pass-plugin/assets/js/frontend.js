@@ -1,5 +1,5 @@
 /**
- * Cyprus Tourist Pass - Frontend SPA v2.1.0
+ * Cyprus Tourist Pass - Frontend SPA v2.3.5
  * Pure vanilla JavaScript — no React or framework dependencies
  */
 (function () {
@@ -660,12 +660,17 @@
         });
     }
 
-    function handleLoginSuccess(result) {
+    async function handleLoginSuccess(result) {
         state.token = result.token;
-        state.user = result.user;
         localStorage.setItem('ctp_token', result.token);
-        localStorage.setItem('ctp_user', JSON.stringify(result.user));
-        // Apply agency branding if returned (e.g. from registration with contract)
+        try {
+            var me = await api('auth/me');
+            state.user = me;
+            localStorage.setItem('ctp_user', JSON.stringify(me));
+        } catch (e) {
+            state.user = result.user;
+            localStorage.setItem('ctp_user', JSON.stringify(result.user));
+        }
         if (result.agency) {
             applyAgencyBranding(result.agency);
         }
@@ -733,6 +738,13 @@
         var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    function parseUtcDate(s) {
+        if (s && !s.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(s)) {
+            s = s + 'Z';
+        }
+        return new Date(s);
     }
 
     function formatDate(dateStr) {
@@ -1194,8 +1206,8 @@
             return;
         }
 
-        var isExpired = new Date(state.qrToken.expiresAt) < new Date();
-        var expiresIn = Math.max(0, Math.floor((new Date(state.qrToken.expiresAt) - new Date()) / 60000));
+        var isExpired = parseUtcDate(state.qrToken.expiresAt) < new Date();
+        var expiresIn = Math.max(0, Math.floor((parseUtcDate(state.qrToken.expiresAt) - new Date()) / 60000));
 
         container.innerHTML = `
             <div class="ctp-card">
@@ -1247,7 +1259,7 @@
                     clearInterval(countdownInterval);
                     return;
                 }
-                var remaining = Math.max(0, Math.floor((new Date(state.qrToken.expiresAt) - new Date()) / 1000));
+                var remaining = Math.max(0, Math.floor((parseUtcDate(state.qrToken.expiresAt) - new Date()) / 1000));
                 if (remaining <= 0) {
                     clearInterval(countdownInterval);
                     expiresEl.innerHTML = '<span style="color:var(--ctp-red-500)">Expired — please generate a new one</span>';

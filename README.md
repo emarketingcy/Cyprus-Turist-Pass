@@ -66,6 +66,10 @@ All REST routes are served under `/wp-json/ctp/v1/`.
 
 ## Changelog
 
+### [2.3.5] - 2026-05-25
+- Fixed (Web): QR code showed "Expired" immediately on Cyprus-timezone browsers — `new Date(expiresAt)` parsed UTC server timestamps as local time; added `parseUtcDate()` helper that appends `'Z'` for bare datetime strings
+- Fixed (Web): Login did not populate contract / merchant profile — `handleLoginSuccess()` now calls `/auth/me` immediately after login so the contract tab and merchant settings load correctly from the first page render
+
 ### [2.3.0] - 2026-05-25
 - Added: WordPress admin **Flutter App Connection** panel (Dashboard, Settings, Help pages) — auto-generates `API_BASE_URL` from the live site URL with one-click copy buttons for the build and run commands
 - Fixed: `process_payment` — any authenticated merchant could process a QR token issued for a different merchant (missing ownership check)
