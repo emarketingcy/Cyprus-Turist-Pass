@@ -3,7 +3,7 @@
  * Plugin Name: Cyprus Tourist Pass
  * Plugin URI: https://emarketing.cy
  * Description: A tourist discount pass platform for Cyprus. Validates rental car contracts and provides exclusive merchant discounts via QR codes.
- * Version: 2.1.0
+ * Version: 2.2.0
  * Author: eMarketing Cyprus by Saltpixek Team
  * Author URI: https://eMarketing.cy
  * License: GPL v2 or later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'CTP_VERSION', '2.1.0' );
+define( 'CTP_VERSION', '2.2.0' );
 define( 'CTP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CTP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CTP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -70,6 +70,10 @@ final class Cyprus_Tourist_Pass {
         // Auto-upgrade database on version change (no deactivate/activate needed)
         add_action( 'plugins_loaded', array( $this, 'check_version_upgrade' ), 10 );
 
+        // CORS headers for Flutter web / mobile clients
+        add_action( 'rest_api_init', array( $this, 'add_cors_headers' ), 15 );
+        add_filter( 'rest_pre_serve_request', array( $this, 'serve_cors_preflight' ) );
+
         // LiteSpeed Cache exceptions
         add_action( 'litespeed_init', array( $this, 'litespeed_cache_exceptions' ) );
     }
@@ -106,6 +110,25 @@ final class Cyprus_Tourist_Pass {
      * LiteSpeed Cache plugin exceptions.
      * Exclude CTP REST API and dynamic pages from caching.
      */
+    public function add_cors_headers() {
+        remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
+    }
+
+    public function serve_cors_preflight( $served ) {
+        if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/ctp/v1/' ) !== false ) {
+            header( 'Access-Control-Allow-Origin: *' );
+            header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+            header( 'Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce' );
+            header( 'Access-Control-Expose-Headers: X-WP-Total, X-WP-TotalPages' );
+
+            if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
+                status_header( 200 );
+                exit();
+            }
+        }
+        return $served;
+    }
+
     public function litespeed_cache_exceptions() {
         // Do not cache REST API calls for CTP
         if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/wp-json/ctp/v1/' ) !== false ) {

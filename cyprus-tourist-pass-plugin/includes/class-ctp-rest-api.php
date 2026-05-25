@@ -409,6 +409,35 @@ class CTP_Rest_API {
             }
         }
 
+        // Attach active contract for customers
+        if ( $user->role === 'CUSTOMER' ) {
+            $table_customers = $wpdb->prefix . 'ctp_customer_profiles';
+            $table_contracts = $wpdb->prefix . 'ctp_rental_contracts';
+
+            $customer = $wpdb->get_row( $wpdb->prepare(
+                "SELECT id FROM $table_customers WHERE user_id = %d",
+                $user->id
+            ) );
+
+            if ( $customer ) {
+                $contract = $wpdb->get_row( $wpdb->prepare(
+                    "SELECT * FROM $table_contracts WHERE customer_id = %d AND is_valid = 1 AND end_date > %s ORDER BY created_at DESC LIMIT 1",
+                    $customer->id,
+                    current_time( 'mysql' )
+                ) );
+
+                if ( $contract ) {
+                    $response['contract'] = array(
+                        'contractNumber' => $contract->contract_number,
+                        'agencyName'     => $contract->agency_name,
+                        'vehicleClass'   => $contract->vehicle_class,
+                        'startDate'      => $contract->start_date,
+                        'endDate'        => $contract->end_date,
+                    );
+                }
+            }
+        }
+
         return rest_ensure_response( $response );
     }
 
@@ -596,18 +625,17 @@ class CTP_Rest_API {
             'is_valid'        => 1,
         ) );
 
+        // Flat response so Flutter ContractInfo.fromJson() works on res.data directly
         return rest_ensure_response( array(
-            'message'  => 'Contract validated successfully with ' . $agency_name . '!',
-            'contract' => array(
-                'contractNumber' => $contract_number,
-                'agencyName'     => $agency_name,
-                'agencySlug'     => $agency->slug,
-                'startDate'      => $start_date,
-                'endDate'        => $end_date,
-                'vehicleClass'   => $vehicle_class,
-                'isValid'        => true,
-            ),
-            'agency' => self::format_agency_branding( $agency ),
+            'message'        => 'Contract validated successfully with ' . $agency_name . '!',
+            'contractNumber' => $contract_number,
+            'agencyName'     => $agency_name,
+            'agencySlug'     => $agency->slug,
+            'startDate'      => $start_date,
+            'endDate'        => $end_date,
+            'vehicleClass'   => $vehicle_class,
+            'isValid'        => true,
+            'agency'         => self::format_agency_branding( $agency ),
         ) );
     }
 
@@ -624,7 +652,7 @@ class CTP_Rest_API {
         ) );
 
         if ( ! $customer ) {
-            return rest_ensure_response( array( 'contract' => null, 'agency' => null ) );
+            return new WP_Error( 'no_contract', 'No active rental contract found.', array( 'status' => 404 ) );
         }
 
         $contract = $wpdb->get_row( $wpdb->prepare(
@@ -633,13 +661,13 @@ class CTP_Rest_API {
         ) );
 
         if ( ! $contract ) {
-            return rest_ensure_response( array( 'contract' => null, 'agency' => null ) );
+            return new WP_Error( 'no_contract', 'No active rental contract found.', array( 'status' => 404 ) );
         }
 
         // Check if expired
         if ( strtotime( $contract->end_date ) < time() ) {
             $wpdb->update( $table_contracts, array( 'is_valid' => 0 ), array( 'id' => $contract->id ) );
-            return rest_ensure_response( array( 'contract' => null, 'agency' => null ) );
+            return new WP_Error( 'no_contract', 'No active rental contract found.', array( 'status' => 404 ) );
         }
 
         // Load agency branding
@@ -656,17 +684,16 @@ class CTP_Rest_API {
             $agency = self::detect_agency_from_contract( $contract->contract_number );
         }
 
+        // Return flat ContractInfo fields (Flutter reads top-level keys directly)
         return rest_ensure_response( array(
-            'contract' => array(
-                'contractNumber' => $contract->contract_number,
-                'agencyName'     => $contract->agency_name,
-                'agencySlug'     => $contract->agency_slug ?? ($agency ? $agency->slug : null),
-                'startDate'      => $contract->start_date,
-                'endDate'        => $contract->end_date,
-                'vehicleClass'   => $contract->vehicle_class,
-                'isValid'        => (bool) $contract->is_valid,
-            ),
-            'agency' => self::format_agency_branding( $agency ),
+            'contractNumber' => $contract->contract_number,
+            'agencyName'     => $contract->agency_name,
+            'agencySlug'     => $contract->agency_slug ?? ( $agency ? $agency->slug : null ),
+            'startDate'      => $contract->start_date,
+            'endDate'        => $contract->end_date,
+            'vehicleClass'   => $contract->vehicle_class,
+            'isValid'        => (bool) $contract->is_valid,
+            'agency'         => self::format_agency_branding( $agency ),
         ) );
     }
 
@@ -879,7 +906,8 @@ class CTP_Rest_API {
         ) );
 
         return rest_ensure_response( array(
-            'token'        => $token,
+            'qrToken'      => $token,
+            'merchantId'   => $merchant_id,
             'merchantName' => $merchant->business_name,
             'discountRate' => floatval( $merchant->discount_rate ),
             'expiresAt'    => $expires_at,
@@ -895,7 +923,7 @@ class CTP_Rest_API {
         }
 
         $params = $request->get_json_params();
-        $token  = sanitize_text_field( $params['token'] ?? '' );
+        $token  = sanitize_text_field( $params['qrToken'] ?? $params['token'] ?? '' );
 
         if ( ! $token ) {
             return new WP_Error( 'missing_token', 'QR token is required.', array( 'status' => 400 ) );
@@ -946,10 +974,12 @@ class CTP_Rest_API {
 
         return rest_ensure_response( array(
             'valid'           => true,
+            'qrToken'         => $qr->token,
             'qrTokenId'       => (int) $qr->id,
             'customerId'      => (int) $qr->customer_id,
             'customerName'    => $customer ? $customer->first_name . ' ' . $customer->last_name : 'Unknown',
             'discountRate'    => floatval( $qr->discount_rate ),
+            'merchantName'    => $merchant->business_name,
             'platformFeeRate' => $platform_fee_rate,
             'expiresAt'       => $qr->expires_at,
         ) );
@@ -964,18 +994,23 @@ class CTP_Rest_API {
         }
 
         $params          = $request->get_json_params();
+        $qr_token_str    = sanitize_text_field( $params['qrToken'] ?? '' );
         $qr_token_id     = intval( $params['qrTokenId'] ?? 0 );
         $original_amount = floatval( $params['originalAmount'] ?? 0 );
 
-        if ( ! $qr_token_id || $original_amount <= 0 ) {
-            return new WP_Error( 'invalid_params', 'QR token ID and positive amount are required.', array( 'status' => 400 ) );
+        if ( ( ! $qr_token_str && ! $qr_token_id ) || $original_amount <= 0 ) {
+            return new WP_Error( 'invalid_params', 'QR token and positive amount are required.', array( 'status' => 400 ) );
         }
 
         $table_qr           = $wpdb->prefix . 'ctp_qr_tokens';
         $table_merchants    = $wpdb->prefix . 'ctp_merchant_profiles';
         $table_transactions = $wpdb->prefix . 'ctp_transactions';
 
-        $qr = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_qr WHERE id = %d", $qr_token_id ) );
+        if ( $qr_token_str ) {
+            $qr = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_qr WHERE token = %s", $qr_token_str ) );
+        } else {
+            $qr = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_qr WHERE id = %d", $qr_token_id ) );
+        }
 
         if ( ! $qr || $qr->used ) {
             return new WP_Error( 'invalid_qr', 'Invalid or already used QR token.', array( 'status' => 400 ) );
@@ -1018,6 +1053,7 @@ class CTP_Rest_API {
 
         return rest_ensure_response( array(
             'success'        => true,
+            'status'         => 'COMPLETED',
             'transactionId'  => $wpdb->insert_id,
             'originalAmount' => $original_amount,
             'discountRate'   => $discount_rate,

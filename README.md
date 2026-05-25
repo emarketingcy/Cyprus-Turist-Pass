@@ -64,6 +64,19 @@ All REST routes are served under `/wp-json/ctp/v1/`.
 
 ---
 
+## Changelog
+
+### [2.2.0] - 2026-05-25
+- Added: CORS headers (`Access-Control-Allow-*`) for Flutter web support — OPTIONS preflight handled automatically
+- Fixed: `POST /payment/create-qr` now returns `qrToken` (renamed from `token`) and `merchantId`
+- Fixed: `POST /payment/validate-qr` now accepts `qrToken` request field (was `token`); response now includes `qrToken` string and `merchantName`
+- Fixed: `POST /payment/process` now accepts `qrToken` string (was `qrTokenId` integer); response now includes `status: "COMPLETED"`
+- Fixed: `GET /rental/status` returns 404 when no active contract (was 200 with nulls); returns flat `ContractInfo` fields at top level (was nested under `contract` key)
+- Fixed: `POST /rental/validate` returns flat `ContractInfo` fields at top level (was nested under `contract` key)
+- Fixed: `GET /auth/me` now includes `contract` object for CUSTOMER role users
+
+---
+
 ## License
 
 Proprietary — © Malaka Cyprus. All rights reserved.
