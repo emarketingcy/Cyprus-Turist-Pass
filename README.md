@@ -66,6 +66,11 @@ All REST routes are served under `/wp-json/ctp/v1/`.
 
 ## Changelog
 
+### [2.3.6] - 2026-05-25
+- Fixed (Web): Contract validation showed the form again immediately — `loadContractStatus()` was reading `result.contract` but `GET /rental/status` returns a flat object; changed to `result` directly
+- Fixed (Web): Discover tab always asked to re-validate contract — `state.contract` wasn't seeded at login; now populated from `/auth/me` response and from cached user on page reload
+- Fixed (Web): `/auth/me` contract object now includes `isValid: true` and `agencySlug` so the Contract tab shows "Active Contract" correctly on first load after login
+
 ### [2.3.5] - 2026-05-25
 - Fixed (Web): QR code showed "Expired" immediately on Cyprus-timezone browsers — `new Date(expiresAt)` parsed UTC server timestamps as local time; added `parseUtcDate()` helper that appends `'Z'` for bare datetime strings
 - Fixed (Web): Login did not populate contract / merchant profile — `handleLoginSuccess()` now calls `/auth/me` immediately after login so the contract tab and merchant settings load correctly from the first page render

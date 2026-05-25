@@ -468,9 +468,11 @@ class CTP_Rest_API {
                     $response['contract'] = array(
                         'contractNumber' => $contract->contract_number,
                         'agencyName'     => $contract->agency_name,
+                        'agencySlug'     => $contract->agency_slug ?? null,
                         'vehicleClass'   => $contract->vehicle_class,
                         'startDate'      => $contract->start_date,
                         'endDate'        => $contract->end_date,
+                        'isValid'        => true,
                     );
                 }
             }

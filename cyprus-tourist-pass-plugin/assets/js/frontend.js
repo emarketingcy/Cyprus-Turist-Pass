@@ -1,5 +1,5 @@
 /**
- * Cyprus Tourist Pass - Frontend SPA v2.3.5
+ * Cyprus Tourist Pass - Frontend SPA v2.3.6
  * Pure vanilla JavaScript — no React or framework dependencies
  */
 (function () {
@@ -23,6 +23,9 @@
     var storedAgency = null;
     try { storedAgency = JSON.parse(localStorage.getItem('ctp_agency') || 'null'); } catch (e) { /* ignore */ }
 
+    // Pre-seed contract from cached user so Discover works immediately after page reload
+    var storedContract = (storedUser && storedUser.contract) ? storedUser.contract : null;
+
     const state = {
         token: localStorage.getItem('ctp_token') || null,
         user: storedUser,
@@ -31,7 +34,7 @@
         adminTab: 'overview',
         merchantView: 'pos',
         // Data
-        contract: null,
+        contract: storedContract,
         agency: storedAgency,        // Current agency branding (Hertz/Sixt/etc)
         agencies: [],                 // All available agencies
         merchants: [],
@@ -667,6 +670,10 @@
             var me = await api('auth/me');
             state.user = me;
             localStorage.setItem('ctp_user', JSON.stringify(me));
+            // Seed contract state immediately so Discover tab works before Contract tab loads
+            if (me && me.contract) {
+                state.contract = me.contract;
+            }
         } catch (e) {
             state.user = result.user;
             localStorage.setItem('ctp_user', JSON.stringify(result.user));
@@ -874,12 +881,18 @@
     async function loadContractStatus() {
         try {
             var result = await api('rental/status');
-            state.contract = result.contract;
+            state.contract = result;  // flat ContractInfo — no nested .contract key
+            // Keep cached user in sync so page reloads show the contract immediately
+            if (state.user) {
+                state.user.contract = result;
+                localStorage.setItem('ctp_user', JSON.stringify(state.user));
+            }
             if (result.agency) {
                 applyAgencyBranding(result.agency);
             }
             renderContractStatusUI();
         } catch (err) {
+            state.contract = null;
             renderContractStatusUI();
         }
     }

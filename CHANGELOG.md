@@ -2,6 +2,14 @@
 
 All notable changes to the Cyprus Tourist Pass plugin will be documented in this file.
 
+## [2.3.6] - 2026-05-25
+
+### Fixed (Web frontend)
+- **Contract tab shows form again after validation** — `loadContractStatus()` was doing `state.contract = result.contract` but `GET /rental/status` returns a flat `ContractInfo` object (no nested `contract` key); changed to `state.contract = result`
+- **Discover tab redirects to contract form even after contract was validated** — `state.contract` was only populated when the Contract tab was visited; now seeded immediately at login from the `/auth/me` response and from the cached user on page reload so `claimDiscount()` works from any tab
+- **Contract validation appears to "refresh" the form** — same root cause as above; form re-rendered because `state.contract` remained `undefined`; fixed by the flat-object assignment change
+- **`/auth/me` contract missing `isValid`** — added `'isValid' => true` (and `agencySlug`) to the contract object returned by `GET /auth/me` so the Contract tab correctly renders "Active Contract" when initialized from the login response
+
 ## [2.3.5] - 2026-05-25
 
 ### Fixed (Web frontend)
