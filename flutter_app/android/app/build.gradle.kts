@@ -34,8 +34,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
+}
 
-
+// Keep Kotlin JVM target in sync with Java compile options
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions { jvmTarget = "11" }
 }
 
 flutter { source = "../.." }
